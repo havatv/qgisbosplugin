@@ -3,7 +3,8 @@
 /***************************************************************************
  BOS
                                  A QGIS plugin
- Implements the BOS method for assessing the accuracy of geographical lines
+ Implements the BOS method for assessing the accuracy of geographical line
+ data sets
                               -------------------
         begin                : 2017-10-19
         git sha              : $Format:%H$
@@ -22,6 +23,12 @@
 """
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt4.QtGui import QAction, QIcon
+from PyQt4.QtGui import QMessageBox
+
+from qgis.core import QgsMapLayerRegistry, QgsMapLayer
+from qgis.core import QGis
+#3#from qgis.core import QgsWkbTypes
+
 # Initialize Qt resources from file resources.py
 import resources
 # Import the code for the dialog
@@ -161,7 +168,7 @@ class BOS:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ':/plugins/BOS/icon.png'
+        icon_path = ':/plugins/BOS/bos.png'
         self.add_action(
             icon_path,
             text=self.tr(u'The BOS line accuracy assessment method'),
@@ -182,6 +189,36 @@ class BOS:
 
     def run(self):
         """Run method that performs all the real work"""
+
+        # Populate the input and reference layer combo boxes
+        layers = QgsMapLayerRegistry.instance().mapLayers()  #2#
+        #3# layers = QgsProject.instance().mapLayers()
+        layerslist = []
+        for id in layers.keys():
+            if layers[id].type() == QgsMapLayer.VectorLayer:
+                if not layers[id].isValid():
+                    QMessageBox.information(None,
+                        self.tr('Information'),
+                        'Layer ' + layers[id].name() + ' is not valid')
+                #3#if layers[id].wkbType() == QgsWkbTypes.LineGeometry:
+                if layers[id].wkbType() == QGis.WKBLineString:   #2#
+                    layerslist.append((layers[id].name(), id))
+        if len(layerslist) == 0 or len(layers) == 0:
+            QMessageBox.information(None,
+               self.tr('Information'),
+               self.tr('Line vector layers not found'))
+            return
+        # Add the layers to the layers combobox
+        self.dlg.inputLayer.clear()
+        for layerdescription in layerslist:
+            self.dlg.inputLayer.addItem(layerdescription[0],
+                                        layerdescription[1])
+        self.dlg.referenceLayer.clear()
+        # Add the layers to the layers combobox
+        for layerdescription in layerslist:
+            self.dlg.referenceLayer.addItem(layerdescription[0],
+                                        layerdescription[1])
+
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop

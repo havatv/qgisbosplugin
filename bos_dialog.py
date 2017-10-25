@@ -23,13 +23,17 @@
 
 import os
 
-from PyQt4 import QtGui, uic
+from PyQt4 import uic
+from PyQt4.QtGui import QDialog, QDialogButtonBox
+#from PyQt4.QtGui import QProgressBar
+#from PyQt4.QtGui import QMessageBox
+#from PyQt4.QtGui import QPushButton
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'bos_dialog_base.ui'))
 
 
-class BOSDialog(QtGui.QDialog, FORM_CLASS):
+class BOSDialog(QDialog, FORM_CLASS):
     def __init__(self, parent=None):
         """Constructor."""
         super(BOSDialog, self).__init__(parent)
@@ -39,3 +43,21 @@ class BOSDialog(QtGui.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+
+
+        # Some constants
+        #self.BOS = self.tr('BOS')
+        self.BROWSE = self.tr('Browse')
+        self.CANCEL = self.tr('Cancel')
+        self.HELP = self.tr('Help')
+        self.CLOSE = self.tr('Close')
+        self.OK = self.tr('OK')
+        #self.NUMBEROFSTEPS = 10  # Number of steps
+
+        okButton = self.button_box.button(QDialogButtonBox.Ok)
+        okButton.setText(self.OK)
+        cancelButton = self.button_box.button(QDialogButtonBox.Cancel)
+        cancelButton.setText(self.CANCEL)
+        helpButton = self.helpButton
+        helpButton.setText(self.HELP)
+

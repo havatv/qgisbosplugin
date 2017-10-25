@@ -48,7 +48,7 @@ PY_FILES = \
 
 UI_FILES = bos_dialog_base.ui
 
-EXTRAS = metadata.txt icon.png
+EXTRAS = metadata.txt bos.png
 
 EXTRA_DIRS =
 

@@ -9,15 +9,15 @@
 [general]
 name=BOS
 qgisMinimumVersion=2.0
-description=Implements the BOS method for assessing the accuracy of geographical lines
+description=Assess the geometric accuracy of a line dataset by comparing to a line dataset of significantly higher accuracy using the BOS method.
 version=0.1
-author=Håvard Tveite
+author=Håvard Tveite, NMBU
 email=havard.tveite@nmbu.no
+about=The BOS Plugin compares the geometries of two line layers (the input and the reference layer) by buffering and overlay for several buffer sizes, collecting statistics and plotting the results for a visual assessment of the geometric accuracy (and completeness) of the line data set according to the BOS method.
 
-about=Implements the BOS method for assessing the accuracy of geographical line data sets relative to a reference line data set. Provides statistics in the form of diagrams.
-
-tracker=https://github.com/havatv/qgisbosplugin
-repository=https://github.com/havatv/qgisbosplugin
+tracker=https://github.com/havatv/qgisbosplugin/issues
+repository=https://github.com/havatv/qgisbosplugin.git
+homepage=http://arken.nmbu.no/~havatv/gis/qgisplugins/bos
 # End of mandatory metadata
 
 # Recommended items:
@@ -26,11 +26,11 @@ repository=https://github.com/havatv/qgisbosplugin
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=line, statistics, vector, accuracy
+tags=lines, line, statistics, vector, accuracy, completeness
 
 homepage=https://github.com/havatv/qgisbosplugin
 category=Vector
-icon=icon.png
+icon=bos.png
 # experimental flag
 experimental=True
 
