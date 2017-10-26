@@ -38,13 +38,13 @@ LOCALES =
 # translation
 SOURCES = \
 	__init__.py \
-	bos.py bos_dialog.py
+	bos.py bos_dialog.py bos_engine.py
 
 PLUGINNAME = BOS
 
 PY_FILES = \
 	__init__.py \
-	bos.py bos_dialog.py
+	bos.py bos_dialog.py bos_engine.py
 
 UI_FILES = bos_dialog_base.ui
 

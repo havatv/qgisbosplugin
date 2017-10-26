@@ -29,11 +29,14 @@ from qgis.core import QgsMapLayerRegistry, QgsMapLayer
 from qgis.core import QGis
 #3#from qgis.core import QgsWkbTypes
 
+# Plugin imports
+import sys
+import os.path
+sys.path.append(os.path.dirname(__file__))
 # Initialize Qt resources from file resources.py
 import resources
 # Import the code for the dialog
-from bos_dialog import BOSDialog
-import os.path
+from .bos_dialog import BOSDialog
 
 
 class BOS:
@@ -68,10 +71,12 @@ class BOS:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&BOS')
+        # Declare instance attributes
+        self.BOS = self.tr(u'BOS')
+        self.BOSAMP = self.tr(u'&BOS')
         # TODO: We are going to let the user set this up in a future iteration
-        self.toolbar = self.iface.addToolBar(u'BOS')
-        self.toolbar.setObjectName(u'BOS')
+        self.toolbar = self.iface.addToolBar(self.BOS)
+        self.toolbar.setObjectName(self.BOS)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -140,7 +145,7 @@ class BOS:
         """
 
         # Create the dialog (after translation) and keep reference
-        self.dlg = BOSDialog()
+        self.dlg = BOSDialog(self.iface)
 
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
@@ -156,9 +161,9 @@ class BOS:
         if add_to_toolbar:
             self.toolbar.addAction(action)
 
-        if add_to_menu:
+        if add_to_menu and hasattr(self.iface, 'addPluginToVectorMenu'):
             self.iface.addPluginToVectorMenu(
-                self.menu,
+                self.BOSAMP,
                 action)
 
         self.actions.append(action)
@@ -179,9 +184,10 @@ class BOS:
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
-            self.iface.removePluginVectorMenu(
-                self.tr(u'&BOS'),
-                action)
+            if hasattr(self.iface, 'addPluginToVectorMenu'):
+                self.iface.removePluginVectorMenu(
+                    self.BOSAMP,
+                    action)
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
@@ -201,7 +207,8 @@ class BOS:
                         self.tr('Information'),
                         'Layer ' + layers[id].name() + ' is not valid')
                 #3#if layers[id].wkbType() == QgsWkbTypes.LineGeometry:
-                if layers[id].wkbType() == QGis.WKBLineString:   #2#
+                if (layers[id].wkbType() == QGis.WKBLineString or
+                    layers[id].wkbType() == QGis.WKBLineString25D):   #2#
                     layerslist.append((layers[id].name(), id))
         if len(layerslist) == 0 or len(layers) == 0:
             QMessageBox.information(None,
