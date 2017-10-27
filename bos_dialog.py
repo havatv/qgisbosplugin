@@ -112,16 +112,21 @@ class BOSDialog(QDialog, FORM_CLASS):
             #useindex = self.use_index_nonpoint_cb.isChecked()
             #useindexapproximation = self.use_indexapprox_cb.isChecked()
             #distancefieldname = self.distancefieldname.text()
-            iterations = self.iterationsSB.value()
+            steps = self.stepsSB.value()
             startradius = self.startRadiusSB.value()
             endradius = self.endRadiusSB.value()
-
+            delta = (endradius - startradius) / (steps - 1)
+            radii = []
+            for step in range(steps):
+                radii.append(startradius + step * delta)
+            self.showInfo(str(radii))
+            radii = [10,20,50]
+            self.showInfo(str(radii))
             selectedinputonly = self.selectedFeaturesCheckBox.isChecked()
             selectedrefonly = self.selectedRefFeaturesCheckBox.isChecked()
             # create a new worker instance
-            worker = Worker(inputlayer, reflayer, iterations,
-                            startradius, endradius, selectedinputonly,
-                            selectedrefonly)
+            worker = Worker(inputlayer, reflayer, radii,
+                            selectedinputonly, selectedrefonly)
             # configure the QgsMessageBar
             msgBar = self.iface.messageBar().createMessage(
                                                 self.tr('Starting'), '')
@@ -171,14 +176,10 @@ class BOSDialog(QDialog, FORM_CLASS):
         self.iface.messageBar().popWidget(self.messageBar)
         if ok and ret is not None:
             # report the result
-            mem_layer = ret
+            stats = ret
+            self.showInfo(str(ret))
             QgsMessageLog.logMessage(self.tr('BOS finished'),
                                      self.BOS, QgsMessageLog.INFO)
-            mem_layer.dataProvider().updateExtents()
-            mem_layer.commitChanges()
-            self.layerlistchanging = True
-            QgsMapLayerRegistry.instance().addMapLayer(mem_layer)
-            self.layerlistchanging = False
         else:
             # notify the user that something went wrong
             if not ok:
