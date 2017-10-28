@@ -28,7 +28,9 @@ from qgis.core import QgsMessageLog
 #from qgis.core import QgsFeatureRequest, QgsGeometry
 from qgis.core import QgsField
 #from qgis.core import QgsRectangle, QgsCoordinateTransform
-
+from qgis.core import QgsProcessingOutputLayerDefinition
+from qgis.core import QgsProcessingUtils
+from qgis.core import QgsProcessingContext  # thread manipulation?
 #QGIS 3
 from qgis.PyQt import QtCore
 from qgis.PyQt.QtCore import QCoreApplication, QVariant
@@ -214,11 +216,15 @@ class Worker(QtCore.QObject):
             for radius in self.radii:
                 #self.status.emit('Radius ' + str(radius))
                 
-                inpbuff = processing.runalg("qgis:fixeddistancebuffer",
-                                        self.inpvl, radius, 10, True, None, progress=None)
+                #2# inpbuff = processing.runalg("qgis:fixeddistancebuffer",
+                #2#                         self.inpvl, radius, 10, True, None, progress=None)
+                inpbuff = processing.run("qgis:fixeddistancebuffer", {'INPUT': self.inpvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'DISSOLVE': True, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 0, 'OUTPUT': QgsProcessingOutputLayerDefinition('memory:')},feedback=None)
+                        # context=None, onFinish=None, feedback=None
+                      #QgsProcessingOutputLayerDefinition('memory:')
                 # Drop all attributes?
                 # Add a distinguising attribute
-                inpblayer=processing.getObject(inpbuff['OUTPUT'])
+                #2# inpblayer=processing.getObject(inpbuff['OUTPUT'])
+                inpblayer=QgsProcessingUtils.mapLayerFromString(inpbuff['OUTPUT'])
                 provider=inpblayer.dataProvider()
                 provider.addAttributes([QgsField('InputB', QVariant.String)])
                 inpblayer.updateFields()
@@ -252,7 +258,8 @@ class Worker(QtCore.QObject):
             #inpbuff = processing.runalg("qgis:fixeddistancebuffer",
             #                            self.inpvl, 10, 10, True, None, progress=myprogress)
                 #self.status.emit('Input buffer created')
-                refbuff = processing.runalg("qgis:fixeddistancebuffer", self.refvl, radius, 10, True, None, progress=None)
+                #2# refbuff = processing.runalg("qgis:fixeddistancebuffer", self.refvl, radius, 10, True, None, progress=None)
+                refbuff = processing.run("qgis:fixeddistancebuffer", {'INPUT': self.refvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'DISSOLVE': True, 'OUTPUT': None})
                 # Drop all attributes?
                 # Add a distinguising attribute
                 refblayer=processing.getObject(refbuff['OUTPUT'])
@@ -266,7 +273,8 @@ class Worker(QtCore.QObject):
                 refblayer.commitChanges()
 
                 #self.status.emit('Reference buffer created')
-                union = processing.runalg("qgis:union", inpbuff['OUTPUT'], refbuff['OUTPUT'], None, progress=None)
+                #2# union = processing.runalg("qgis:union", inpbuff['OUTPUT'], refbuff['OUTPUT'], None, progress=None)
+                union = processing.runalg("qgis:union", {'INPUT': inpbuff['OUTPUT'], 'OVERLAY': refbuff['OUTPUT']})
                 #self.status.emit('Union finished')
 
 #                # Calculate areas:
@@ -287,8 +295,8 @@ class Worker(QtCore.QObject):
                     i = f.attributes()[iidx]
                     r = f.attributes()[ridx]
                     comb = ''
-                    if i not Null:
-                      if r not Null:
+                    if i is not Null:
+                      if r is not Null:
                         comb = i + r
                       else:
                         comb = i
@@ -298,7 +306,7 @@ class Worker(QtCore.QObject):
                 unionlayer.commitChanges()
 
                 # Do the statistics
-                stats = processing.runalg('qgis:statisticsbycategories', union['OUTPUT'], 'Area', 'Combined', None)
+                stats = processing.run('qgis:statisticsbycategories', union['OUTPUT'], 'Area', 'Combined', None)
                 
                 statistics.append([radius, stats['OUTPUT']])
                 self.calculate_progress()

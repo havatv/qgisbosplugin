@@ -38,8 +38,7 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QCoreApplication, QObject, QThread
 #from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QDialog, QDialogButtonBox
-from qgis.PyQt.QtGui import QMessageBox
-from qgis.PyQt.QtWidgets import QPushButton, QProgressBar
+from qgis.PyQt.QtWidgets import QPushButton, QProgressBar, QMessageBox
 from qgis.PyQt.QtCore import Qt
 
 
@@ -117,7 +116,8 @@ class BOSDialog(QDialog, FORM_CLASS):
             if reflayer is None:
                 self.showError(self.tr('No reference layer defined'))
                 return
-            if reflayer is not None and reflayer.crs().geographicFlag():
+            #if reflayer is not None and reflayer.crs().geographicFlag():
+            if reflayer is not None and reflayer.sourceCrs().isGeographic():
                 self.showWarning('Geographic CRS used for the reference layer -'
                                  ' computations will be in decimal degrees!')
             #outputlayername = self.outputDataset.text()

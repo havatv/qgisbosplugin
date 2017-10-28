@@ -211,7 +211,8 @@ class BOS:
                     QMessageBox.information(None,
                         self.tr('Information'),
                         'Layer ' + layers[id].name() + ' is not valid')
-                if layers[id].wkbType() == QgsWkbTypes.LineGeometry:
+                if layers[id].geometryType() == QgsWkbTypes.LineGeometry:
+                #if layers[id].wkbType() == QgsWkbTypes.LineGeometry:
                 #if (layers[id].wkbType() == QGis.WKBLineString or
                 #    layers[id].wkbType() == QGis.WKBLineString25D):   #2#
                     layerslist.append((layers[id].name(), id))
