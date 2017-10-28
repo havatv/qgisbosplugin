@@ -1,16 +1,9 @@
-# This file contains metadata for your plugin. Since 
-# version 2.0 of QGIS this is the proper way to supply 
-# information about a plugin. The old method of 
-# embedding metadata in __init__.py will 
-# is no longer supported since version 2.0.
-
-# This file should be included when you package your plugin.# Mandatory items:
-
 [general]
 name=BOS
-qgisMinimumVersion=2.0
-description=Assess the geometric accuracy of a line dataset by comparing to a line dataset of significantly higher accuracy using the BOS method.
 version=0.1
+qgisMinimumVersion=2.99
+qgisMaximumVersion=3.99
+description=Assess the geometric accuracy of a line dataset by comparing to a line dataset of significantly higher accuracy using the BOS method.
 author=Håvard Tveite, NMBU
 email=havard.tveite@nmbu.no
 about=The BOS Plugin compares the geometries of two line layers (the input and the reference layer) by buffering and overlay for several buffer sizes, collecting statistics and plotting the results for a visual assessment of the geometric accuracy (and completeness) of the line data set according to the BOS method.
@@ -23,10 +16,10 @@ homepage=http://arken.nmbu.no/~havatv/gis/qgisplugins/bos
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-# changelog=
+changelog=0.1 First lines of code
 
 # Tags are comma separated with spaces allowed
-tags=lines, line, statistics, vector, accuracy, completeness
+tags=lines,line,statistics,vector,accuracy,completeness
 
 homepage=https://github.com/havatv/qgisbosplugin
 category=Vector

@@ -21,13 +21,18 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from PyQt4.QtGui import QAction, QIcon
-from PyQt4.QtGui import QMessageBox
+#2# from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
+#2# from PyQt4.QtGui import QAction, QIcon
+#2# from PyQt4.QtGui import QMessageBox
+from qgis.PyQt.QtCore import QSettings, QCoreApplication
+#QFileInfo, 
+from qgis.PyQt.QtCore import QTranslator, qVersion
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QAction, QMessageBox
 
-from qgis.core import QgsMapLayerRegistry, QgsMapLayer
-from qgis.core import QGis
-#3#from qgis.core import QgsWkbTypes
+#2# from qgis.core import QgsMapLayerRegistry, QgsMapLayer
+#2# from qgis.core import QGis
+from qgis.core import QgsProject, QgsMapLayer, QgsWkbTypes
 
 # Plugin imports
 import sys
@@ -197,8 +202,8 @@ class BOS:
         """Run method that performs all the real work"""
 
         # Populate the input and reference layer combo boxes
-        layers = QgsMapLayerRegistry.instance().mapLayers()  #2#
-        #3# layers = QgsProject.instance().mapLayers()
+        #2# layers = QgsMapLayerRegistry.instance().mapLayers()  #2#
+        layers = QgsProject.instance().mapLayers()
         layerslist = []
         for id in layers.keys():
             if layers[id].type() == QgsMapLayer.VectorLayer:
@@ -206,9 +211,9 @@ class BOS:
                     QMessageBox.information(None,
                         self.tr('Information'),
                         'Layer ' + layers[id].name() + ' is not valid')
-                #3#if layers[id].wkbType() == QgsWkbTypes.LineGeometry:
-                if (layers[id].wkbType() == QGis.WKBLineString or
-                    layers[id].wkbType() == QGis.WKBLineString25D):   #2#
+                if layers[id].wkbType() == QgsWkbTypes.LineGeometry:
+                #if (layers[id].wkbType() == QGis.WKBLineString or
+                #    layers[id].wkbType() == QGis.WKBLineString25D):   #2#
                     layerslist.append((layers[id].name(), id))
         if len(layerslist) == 0 or len(layers) == 0:
             QMessageBox.information(None,

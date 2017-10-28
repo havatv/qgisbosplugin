@@ -22,19 +22,20 @@
 """
 
 from qgis.core import QgsMessageLog
-from qgis.core import QGis
+#from qgis.core import QGis
 #from qgis.core import QgsWkbTypes
-from qgis.core import QgsVectorLayer, QgsFeature, QgsSpatialIndex
-from qgis.core import QgsFeatureRequest, QgsField, QgsGeometry
-from qgis.core import QgsRectangle, QgsCoordinateTransform
+#from qgis.core import QgsVectorLayer, QgsFeature, QgsSpatialIndex
+#from qgis.core import QgsFeatureRequest, QgsGeometry
+from qgis.core import QgsField
+#from qgis.core import QgsRectangle, QgsCoordinateTransform
 
 #QGIS 3
-#from qgis.PyQt import QtCore
-#from qgis.PyQt.QtCore import QCoreApplication, QVariant
+from qgis.PyQt import QtCore
+from qgis.PyQt.QtCore import QCoreApplication, QVariant
 
 #QGIS 2
-from PyQt4 import QtCore
-from PyQt4.QtCore import QCoreApplication, QVariant
+#from PyQt4 import QtCore
+#from PyQt4.QtCore import QCoreApplication, QVariant
 
 import processing
 
@@ -140,18 +141,18 @@ class Worker(QtCore.QObject):
                 self.finished.emit(False, None)
                 return
             # Check the geometry type and prepare the output layer
-            geometryType = self.inpvl.geometryType()
-            #geometrytypetext = 'Point'
-            if geometryType == QGis.Point:
-                self.status.emit('Point layer!')
-                self.finished.emit(False, None)
-                return
-            elif geometryType == QGis.Line:
-                geometrytypetext = 'LineString'
-            elif geometryType == QGis.Polygon:
-                self.status.emit('Polygon layer!')
-                self.finished.emit(False, None)
-                return
+            #geometryType = self.inpvl.geometryType()
+            ##geometrytypetext = 'Point'
+            #if geometryType == QGis.Point:
+            #    self.status.emit('Point layer!')
+            #    self.finished.emit(False, None)
+            #    return
+            #elif geometryType == QGis.Line:
+            #    geometrytypetext = 'LineString'
+            #elif geometryType == QGis.Polygon:
+            #    self.status.emit('Polygon layer!')
+            #    self.finished.emit(False, None)
+            #    return
             # Does the input vector contain multi-geometries?
             # Try to check the first feature
             # This is not used for anything yet
@@ -168,7 +169,7 @@ class Worker(QtCore.QObject):
                     if testfeature.geometry() is not None:
                         if testfeature.geometry().isMultipart():
                             self.inputmulti = True
-                            geometrytypetext = 'Multi' + geometrytypetext
+                            #geometrytypetext = 'Multi' + geometrytypetext
                         else:
                             pass
                     else:

@@ -25,20 +25,33 @@ from os.path import dirname
 from os.path import join
 #import os
 
-from PyQt4 import uic
-from PyQt4.QtCore import QThread, Qt
+#2# from PyQt4 import uic
+#2# from PyQt4.QtCore import QThread
+#2# from PyQt4.QtCore import Qt
 #QObject, 
 #from PyQt4.QtCore import QCoreApplication, QUrl
-from PyQt4.QtGui import QDialog, QDialogButtonBox
-from PyQt4.QtGui import QProgressBar
-from PyQt4.QtGui import QMessageBox
-from PyQt4.QtGui import QPushButton
+#2# from PyQt4.QtGui import QDialog, QDialogButtonBox
+#2# from PyQt4.QtGui import QProgressBar
+#2# from PyQt4.QtGui import QMessageBox
+#2# from PyQt4.QtGui import QPushButton
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import QCoreApplication, QObject, QThread
+#from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
+from qgis.PyQt.QtWidgets import QDialog, QDialogButtonBox
+from qgis.PyQt.QtGui import QMessageBox
+from qgis.PyQt.QtWidgets import QPushButton, QProgressBar
+from qgis.PyQt.QtCore import Qt
 
 
-from qgis.core import QgsMessageLog, QgsMapLayerRegistry
-#from qgis.core import QGis
+#2# from qgis.core import QgsMessageLog, QgsMapLayerRegistry
+#2# from qgis.core import QGis
 #from qgis.core import QgsMapLayer
 from qgis.gui import QgsMessageBar
+
+from qgis.core import QgsMessageLog, QgsProject
+#, QgsWkbTypes
+#from qgis.core import QgsVectorFileWriter, QgsVectorLayer
+#from qgis.utils import showPluginHelp
 
 #from sys.path import append
 #append(dirname(__file__))
@@ -86,13 +99,15 @@ class BOSDialog(QDialog, FORM_CLASS):
         try:
             layerindex = self.inputLayer.currentIndex()
             layerId = self.inputLayer.itemData(layerindex)
-            inputlayer = QgsMapLayerRegistry.instance().mapLayer(layerId)
+            #2# inputlayer = QgsMapLayerRegistry.instance().mapLayer(layerId)
+            inputlayer = QgsProject.instance().mapLayer(layerId)
             if inputlayer is None:
                 self.showError(self.tr('No input layer defined'))
                 return
             refindex = self.referenceLayer.currentIndex()
             reflayerId = self.referenceLayer.itemData(refindex)
-            reflayer = QgsMapLayerRegistry.instance().mapLayer(reflayerId)
+            #2# reflayer = QgsMapLayerRegistry.instance().mapLayer(reflayerId)
+            reflayer = QgsProject.instance().mapLayer(reflayerId)
             # not meaningful to 
             if layerId == reflayerId:
                 self.showInfo('The reference layer must be different'
