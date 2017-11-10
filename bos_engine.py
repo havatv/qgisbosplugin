@@ -286,8 +286,8 @@ class Worker(QtCore.QObject):
                     i = f.attributes()[iidx]
                     r = f.attributes()[ridx]
                     comb = ''
-                    if i is not Null:
-                      if r is not Null:
+                    if i is not None:
+                      if r is not None:
                         comb = i + r
                       else:
                         comb = i
