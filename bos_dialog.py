@@ -157,6 +157,7 @@ class BOSDialog(QDialog, FORM_CLASS):
             self.iface.messageBar().pushWidget(msgBar,
                                                self.iface.messageBar().INFO)
             self.messageBar = msgBar
+            self.showInfo('GUI thread: ' + str(QThread.currentThread()) + ' ID: ' + str(QThread.currentThreadId()))
             # start the worker in a new thread
             thread = QThread(self)
             worker.moveToThread(thread)

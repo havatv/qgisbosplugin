@@ -34,6 +34,7 @@ from qgis.core import QgsProcessingContext  # thread manipulation?
 #QGIS 3
 from qgis.PyQt import QtCore
 from qgis.PyQt.QtCore import QCoreApplication, QVariant
+from qgis.PyQt.QtCore import QThread
 
 #QGIS 2
 #from PyQt4 import QtCore
@@ -121,6 +122,8 @@ class Worker(QtCore.QObject):
     def run(self):
         # Create a vector for the statistics
         statistics = []
+        # Testing threads
+        self.status.emit('Worker thread: ' + str(QThread.currentThread()) + ' ID: ' + str(QThread.currentThreadId()))
         try:
             # Check if the layers look OK
             if self.inpvl is None or self.refvl is None:
@@ -259,7 +262,7 @@ class Worker(QtCore.QObject):
             #                            self.inpvl, 10, 10, True, None, progress=myprogress)
                 #self.status.emit('Input buffer created')
                 #2# refbuff = processing.runalg("qgis:fixeddistancebuffer", self.refvl, radius, 10, True, None, progress=None)
-                refbuff = processing.run("qgis:fixeddistancebuffer", {'INPUT': self.refvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'DISSOLVE': True, 'OUTPUT': None})
+                #refbuff = processing.run("qgis:fixeddistancebuffer", {'INPUT': self.refvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'DISSOLVE': True, 'OUTPUT': None})
                 # Drop all attributes?
                 # Add a distinguising attribute
                 refblayer=processing.getObject(refbuff['OUTPUT'])
@@ -274,7 +277,7 @@ class Worker(QtCore.QObject):
 
                 #self.status.emit('Reference buffer created')
                 #2# union = processing.runalg("qgis:union", inpbuff['OUTPUT'], refbuff['OUTPUT'], None, progress=None)
-                union = processing.runalg("qgis:union", {'INPUT': inpbuff['OUTPUT'], 'OVERLAY': refbuff['OUTPUT']})
+                #union = processing.runalg("qgis:union", {'INPUT': inpbuff['OUTPUT'], 'OVERLAY': refbuff['OUTPUT']})
                 #self.status.emit('Union finished')
 
 #                # Calculate areas:
