@@ -21,6 +21,8 @@
  ***************************************************************************/
 """
 
+import csv
+
 from qgis.core import QgsMessageLog
 from qgis.core import QGis
 #from qgis.core import QgsWkbTypes
@@ -212,21 +214,26 @@ class Worker(QtCore.QObject):
             # output /tmp/test -> /tmp/test.shp - use None to return the (memory) layer.
             for radius in self.radii:
                 #self.status.emit('Radius ' + str(radius))
+                self.status.emit('Buffer (input) ' + str(radius))
                 
                 inpbuff = processing.runalg("qgis:fixeddistancebuffer",
-                                        self.inpvl, radius, 10, True, None, progress=None)
+                                        self.inpvl, radius, 10, True,
+                                        None, progress=None)
+                self.status.emit('Buffer (input) ' + str(radius) + " finished - " + str(inpbuff['OUTPUT']))
                 # Drop all attributes?
-                # Add a distinguising attribute
+                # Add a distinguishing attribute
                 inpblayer=processing.getObject(inpbuff['OUTPUT'])
                 provider=inpblayer.dataProvider()
                 provider.addAttributes([QgsField('InputB', QVariant.String)])
                 inpblayer.updateFields()
+                self.status.emit('Attribute added for input ' + str(radius))
 
                 inpblayer.startEditing()
                 new_field_index = inpblayer.fieldNameIndex('InputB')
                 for f in processing.features(inpblayer):
                     inpblayer.changeAttributeValue(f.id(), new_field_index, 'I')
                 inpblayer.commitChanges()
+                self.status.emit('Attribute set for input ' + str(radius))
 
             #myprogress = self.DummyProgress()
             #def setPercentage(self, percent):
@@ -251,25 +258,32 @@ class Worker(QtCore.QObject):
             #inpbuff = processing.runalg("qgis:fixeddistancebuffer",
             #                            self.inpvl, 10, 10, True, None, progress=myprogress)
                 #self.status.emit('Input buffer created')
+                self.status.emit('Buffer (ref) ' + str(radius))
                 refbuff = processing.runalg("qgis:fixeddistancebuffer", self.refvl, radius, 10, True, None, progress=None)
+                self.status.emit('Buffer (ref) ' + str(radius) + ' created - ' + str(refbuff['OUTPUT']))
+
                 # Drop all attributes?
-                # Add a distinguising attribute
+                # Add a distinguishing attribute
                 refblayer=processing.getObject(refbuff['OUTPUT'])
                 provider=refblayer.dataProvider()
                 provider.addAttributes([QgsField('RefB', QVariant.String)])
                 refblayer.updateFields()
+                self.status.emit('Attribute added for ref ' + str(radius))
                 refblayer.startEditing()
                 new_field_index = refblayer.fieldNameIndex('RefB')
                 for f in processing.features(refblayer):
                     refblayer.changeAttributeValue(f.id(), new_field_index, 'R')
                 refblayer.commitChanges()
+                self.status.emit('Attributes set for ref ' + str(radius))
 
                 #self.status.emit('Reference buffer created')
                 union = processing.runalg("qgis:union", inpbuff['OUTPUT'], refbuff['OUTPUT'], None, progress=None)
+                self.status.emit('Union finished ' + str(radius))
+		#continue
                 #self.status.emit('Union finished')
 
-#                # Calculate areas:
-#                # Create a category field for statistics
+                # Calculate areas:
+                # Create a category field for statistics
                 unionlayer=processing.getObject(union['OUTPUT'])
                 provider=unionlayer.dataProvider()
                 provider.addAttributes([QgsField('Area', QVariant.Double)])
@@ -278,6 +292,7 @@ class Worker(QtCore.QObject):
                 unionlayer.startEditing()
                 area_field_index = unionlayer.fieldNameIndex('Area')
                 combined_field_index = unionlayer.fieldNameIndex('Combined')
+                self.status.emit('Preparing union layer ' + str(radius))
                 for f in processing.features(unionlayer):
                     area = f.geometry().area()
                     unionlayer.changeAttributeValue(f.id(), area_field_index, area)
@@ -288,18 +303,37 @@ class Worker(QtCore.QObject):
                     comb = ''
                     if i is not None:
                       if r is not None:
-                        comb = i + r
+                        comb = str(i) + str(r)
                       else:
-                        comb = i
+                        comb = str(i)
                     else:
-                      comb = r
+                      if r is not None:
+                        comb = str(r)
+                      else:
+                        comb = None
                     unionlayer.changeAttributeValue(f.id(), combined_field_index, comb)
                 unionlayer.commitChanges()
+                self.status.emit('Preparing union layer ' + str(radius) + ' finished')
 
+                self.status.emit('Doing statistics ' + str(radius))
                 # Do the statistics
-                stats = processing.runalg('qgis:statisticsbycategories', union['OUTPUT'], 'Area', 'Combined', None)
-                
-                statistics.append([radius, stats['OUTPUT']])
+                stats = processing.runalg('qgis:statisticsbycategories',
+                                          union['OUTPUT'], 'Area', 'Combined',
+                                          None, progress=None)
+                self.status.emit('Statistics done ' + str(radius))
+		continue
+
+                currstats = {}
+                with open(stats['OUTPUT'], 'rb') as csvfile:
+                  spamreader = csv.DictReader(csvfile)
+                  for row in spamreader:
+                    currstats[row['category']] = row['sum']
+
+                # stats['OUTPUT'] is the location of the CSV file containing the result
+                #statistics.append([radius, stats['OUTPUT']])
+                statistics.append([radius, currstats])
+                self.status.emit('Statistics added ' + str(radius))
+		continue
                 self.calculate_progress()
             
 
@@ -316,7 +350,7 @@ class Worker(QtCore.QObject):
             if self.abort:
                 self.finished.emit(False, None)
             else:
-                self.status.emit('Delivering the memory layer...')
+                self.status.emit('Delivering the results...')
                 #self.finished.emit(True, self.mem_refl)
                 #self.finished.emit(True, None)
                 self.finished.emit(True, statistics)
