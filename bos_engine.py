@@ -38,6 +38,7 @@ from qgis.core import QgsRectangle, QgsCoordinateTransform
 from PyQt4 import QtCore
 from PyQt4.QtCore import QCoreApplication, QVariant
 
+#from processing.core.Processing import Processing
 import processing
 
 class Worker(QtCore.QObject):
@@ -94,6 +95,7 @@ class Worker(QtCore.QObject):
         radii
         """
 
+        #Processing.initialize()
         QtCore.QObject.__init__(self)  # Essential!
         # Creating instance variables from the parameters
         self.inpvl = inputvectorlayer
@@ -328,7 +330,8 @@ class Worker(QtCore.QObject):
                 #statistics.append([radius, stats['OUTPUT']])
                 statistics.append([radius, currstats])
                 #self.status.emit('Statistics added ' + str(radius))
-		#continue
+		continue
+                # Reporting progress to the UI thread and showing it in the UI thread crashes QGIS
                 self.calculate_progress()
             
 

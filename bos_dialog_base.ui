@@ -186,6 +186,9 @@ p, li { white-space: pre-wrap; }
           </item>
           <item>
            <widget class="QDoubleSpinBox" name="endRadiusSB">
+            <property name="maximum">
+             <double>999999999.000000000000000</double>
+            </property>
             <property name="value">
              <double>10.000000000000000</double>
             </property>
@@ -211,7 +214,7 @@ p, li { white-space: pre-wrap; }
           <item>
            <widget class="QLabel" name="label">
             <property name="text">
-             <string>Number of step</string>
+             <string>Number of steps</string>
             </property>
            </widget>
           </item>
