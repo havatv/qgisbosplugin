@@ -187,7 +187,7 @@ class Worker(QtCore.QObject):
                 return
             
 
-            self.status.emit('Starting BOS')
+            #self.status.emit('Starting BOS')
             #crstext = "PROJ4:"+str(self.inpvl.crs().toProj4())
             # If the authid is valid (EPSG), use it.
             #if "EPSG" in str(self.inpvl.crs().authid()):
@@ -214,77 +214,67 @@ class Worker(QtCore.QObject):
             # output /tmp/test -> /tmp/test.shp - use None to return the (memory) layer.
             for radius in self.radii:
                 #self.status.emit('Radius ' + str(radius))
-                self.status.emit('Buffer (input) ' + str(radius))
-                
-                inpbuff = processing.runalg("qgis:fixeddistancebuffer",
-                                        self.inpvl, radius, 10, True,
-                                        None, progress=None)
-                self.status.emit('Buffer (input) ' + str(radius) + " finished - " + str(inpbuff['OUTPUT']))
+                #self.status.emit('Buffer (input) ' + str(radius))
+                blayer = QgsVectorLayer('Polygon:crs='+self.inpvl.crs().authid(), 'inbuff', 'memory')
+                #processing.runalg("qgis:fixeddistancebuffer", self.inpvl, radius, 10, True, blayer, progress=None)
+                inpbuff = processing.runalg("qgis:fixeddistancebuffer", self.inpvl, radius, 10, True, None, progress=None)
+                ##self.status.emit('Buffer (input) ' + str(radius) + " finished - " + str(inpbuff['OUTPUT']))
+                #self.status.emit('Buffer (input) ' + str(radius) + " finished")
                 # Drop all attributes?
                 # Add a distinguishing attribute
                 inpblayer=processing.getObject(inpbuff['OUTPUT'])
+                #inpblayer=blayer
+                #self.status.emit('Inp buffer features: ' + str(inpblayer.featureCount()))
                 provider=inpblayer.dataProvider()
                 provider.addAttributes([QgsField('InputB', QVariant.String)])
                 inpblayer.updateFields()
-                self.status.emit('Attribute added for input ' + str(radius))
+                #self.status.emit('Attribute added for input ' + str(radius))
 
                 inpblayer.startEditing()
                 new_field_index = inpblayer.fieldNameIndex('InputB')
                 for f in processing.features(inpblayer):
                     inpblayer.changeAttributeValue(f.id(), new_field_index, 'I')
                 inpblayer.commitChanges()
-                self.status.emit('Attribute set for input ' + str(radius))
+                #self.status.emit('Attribute set for input ' + str(radius))
 
-            #myprogress = self.DummyProgress()
-            #def setPercentage(self, percent):
-            #    self.status.emit(str(percent))
-            #myprogress.setPercentage = setPercentage
-            #def setText(self, text):
-            #    self.status.emit(str(text))
-            #myprogress.setText = setText
-            #def error(self, er_msg):
-            #    self.status.emit(str(er_msg))
-            #myprogress.error = error
-            #def setCommand(self, comd):
-            #    self.status.emit(str(comd))
-            #myprogress.setCommand = setCommand
-
-            #myprogress = type("MyProgress", (object,),
-            #  { "setPercentage": lambda percent: self.status.emit(str(percent)),
-            #    "setText": lambda text: self.status.emit(text),
-            #    "error": lambda er_msg: self.status.emit(er_msg),
-            #    "setCommand": lambda comd: self.status.emit(comd)
-            #  })
-            #inpbuff = processing.runalg("qgis:fixeddistancebuffer",
-            #                            self.inpvl, 10, 10, True, None, progress=myprogress)
-                #self.status.emit('Input buffer created')
-                self.status.emit('Buffer (ref) ' + str(radius))
+                ##self.status.emit('Input buffer created')
+                #self.status.emit('Buffer (ref) ' + str(radius))
+                rblayer = QgsVectorLayer('Polygon:crs='+self.inpvl.crs().authid(), "refbuff", "memory")
+                #processing.runalg("qgis:fixeddistancebuffer", self.refvl, radius, 10, True, rblayer, progress=None)
                 refbuff = processing.runalg("qgis:fixeddistancebuffer", self.refvl, radius, 10, True, None, progress=None)
-                self.status.emit('Buffer (ref) ' + str(radius) + ' created - ' + str(refbuff['OUTPUT']))
+                ##self.status.emit('Buffer (ref) ' + str(radius) + ' created - ' + str(refbuff['OUTPUT']))
+                #self.status.emit('Buffer (ref) ' + str(radius) + ' created')
 
                 # Drop all attributes?
                 # Add a distinguishing attribute
                 refblayer=processing.getObject(refbuff['OUTPUT'])
+                #refblayer=rblayer
+                #self.status.emit('Ref buffer features: ' + str(refblayer.featureCount()))
                 provider=refblayer.dataProvider()
                 provider.addAttributes([QgsField('RefB', QVariant.String)])
                 refblayer.updateFields()
-                self.status.emit('Attribute added for ref ' + str(radius))
+                #self.status.emit('Attribute added for ref ' + str(radius))
                 refblayer.startEditing()
                 new_field_index = refblayer.fieldNameIndex('RefB')
                 for f in processing.features(refblayer):
                     refblayer.changeAttributeValue(f.id(), new_field_index, 'R')
                 refblayer.commitChanges()
-                self.status.emit('Attributes set for ref ' + str(radius))
+                #self.status.emit('Attributes set for ref ' + str(radius))
 
-                #self.status.emit('Reference buffer created')
-                union = processing.runalg("qgis:union", inpbuff['OUTPUT'], refbuff['OUTPUT'], None, progress=None)
-                self.status.emit('Union finished ' + str(radius))
+                ##self.status.emit('Reference buffer created')
+                ulayer = QgsVectorLayer('Polygon:crs='+self.inpvl.crs().authid(), "temp_union", "memory")
+                #processing.runalg("qgis:union", inpblayer, refblayer, ulayer, progress=None)
+                union = processing.runalg("qgis:union", inpblayer, refblayer, None, progress=None)
+                #union = processing.runalg("qgis:union", inpbuff['OUTPUT'], refbuff['OUTPUT'], None, progress=None)
+                #self.status.emit('Union finished ' + str(radius))
 		#continue
-                #self.status.emit('Union finished')
+                ##self.status.emit('Union finished')
 
                 # Calculate areas:
                 # Create a category field for statistics
                 unionlayer=processing.getObject(union['OUTPUT'])
+                #unionlayer=ulayer
+                #self.status.emit('Union features: ' + str(unionlayer.featureCount()))
                 provider=unionlayer.dataProvider()
                 provider.addAttributes([QgsField('Area', QVariant.Double)])
                 provider.addAttributes([QgsField('Combined', QVariant.String)])
@@ -292,7 +282,7 @@ class Worker(QtCore.QObject):
                 unionlayer.startEditing()
                 area_field_index = unionlayer.fieldNameIndex('Area')
                 combined_field_index = unionlayer.fieldNameIndex('Combined')
-                self.status.emit('Preparing union layer ' + str(radius))
+                #self.status.emit('Preparing union layer ' + str(radius))
                 for f in processing.features(unionlayer):
                     area = f.geometry().area()
                     unionlayer.changeAttributeValue(f.id(), area_field_index, area)
@@ -313,32 +303,37 @@ class Worker(QtCore.QObject):
                         comb = None
                     unionlayer.changeAttributeValue(f.id(), combined_field_index, comb)
                 unionlayer.commitChanges()
-                self.status.emit('Preparing union layer ' + str(radius) + ' finished')
+                #self.status.emit('Preparing union layer ' + str(radius) + ' finished')
 
-                self.status.emit('Doing statistics ' + str(radius))
+                #self.status.emit('Doing statistics ' + str(radius))
                 # Do the statistics
+                #stats = processing.runalg('qgis:statisticsbycategories',
+                #                          union['OUTPUT'], 'Area', 'Combined',
+                #                          None, progress=None)
                 stats = processing.runalg('qgis:statisticsbycategories',
-                                          union['OUTPUT'], 'Area', 'Combined',
+                                          unionlayer, 'Area', 'Combined',
                                           None, progress=None)
-                self.status.emit('Statistics done ' + str(radius))
-		continue
-
+                #self.status.emit('Statistics done ' + str(radius) + ' ' + str(stats))
+                ##self.status.emit('Statistics done ' + str(radius))
+		#continue
+                
                 currstats = {}
                 with open(stats['OUTPUT'], 'rb') as csvfile:
                   spamreader = csv.DictReader(csvfile)
                   for row in spamreader:
+                    #self.status.emit('Cat ' + row['category'] + ' ' +  str(row['sum']))
                     currstats[row['category']] = row['sum']
-
+                
                 # stats['OUTPUT'] is the location of the CSV file containing the result
                 #statistics.append([radius, stats['OUTPUT']])
                 statistics.append([radius, currstats])
-                self.status.emit('Statistics added ' + str(radius))
-		continue
+                #self.status.emit('Statistics added ' + str(radius))
+		#continue
                 self.calculate_progress()
             
 
 
-            #self.status.emit('Worker finished')
+            ##self.status.emit('Worker finished')
         except:
             import traceback
             self.error.emit(traceback.format_exc())
@@ -350,7 +345,7 @@ class Worker(QtCore.QObject):
             if self.abort:
                 self.finished.emit(False, None)
             else:
-                self.status.emit('Delivering the results...')
+                #self.status.emit('Delivering the results...')
                 #self.finished.emit(True, self.mem_refl)
                 #self.finished.emit(True, None)
                 self.finished.emit(True, statistics)

@@ -177,7 +177,7 @@ class BOSDialog(QDialog, FORM_CLASS):
         if ok and ret is not None:
             # report the result
             stats = ret
-            self.showInfo(str(ret))
+            self.showInfo("Returned object: " + str(ret))
             QgsMessageLog.logMessage(self.tr('BOS finished'),
                                      self.BOS, QgsMessageLog.INFO)
         else:
