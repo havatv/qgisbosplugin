@@ -190,7 +190,22 @@ class BOSDialog(QDialog, FORM_CLASS):
         self.button_box.button(QDialogButtonBox.Ok).setEnabled(True)
         self.button_box.button(QDialogButtonBox.Close).setEnabled(True)
         self.button_box.button(QDialogButtonBox.Cancel).setEnabled(False)
+        # Do the plotting
+        self.showPlots(ret)
         # End of workerFinished
+
+    # Very incomplete!
+    def showPlots(self, stats):
+        #BOSGraphicsView
+        viewprect = QRectF(self.BOSGraphicsView.viewport().rect())
+        self.BOSGraphicsView.setSceneRect(viewprect)
+        bottom = self.BOSGraphicsView.sceneRect().bottom()
+        top = self.BOSGraphicsView.sceneRect().top()
+        left = self.BOSGraphicsView.sceneRect().left()
+        right = self.BOSGraphicsView.sceneRect().right()
+        height = bottom - top
+        width = right - left
+        padding = 3
 
     def killWorker(self):
         """Kill the worker thread."""
