@@ -207,7 +207,8 @@ class BOSDialog(QDialog, FORM_CLASS):
         self.button_box.button(QDialogButtonBox.Close).setEnabled(True)
         self.button_box.button(QDialogButtonBox.Cancel).setEnabled(False)
         # Do the plotting
-        self.showPlots(ret)
+        if ok and ret is not None:
+            self.showPlots(ret)
         # End of workerFinished
 
     # Very incomplete!
@@ -228,14 +229,16 @@ class BOSDialog(QDialog, FORM_CLASS):
         if width > height:
             size = height
         padding = 3
-        padleft = 20
-        padright = 3
+        padleft = 23
+        padright = 6
+        padbottom = 10
+        padtop = 6
 
         minx = padleft
-        maxx = width - padding
+        maxx = width - padright
         xsize = maxx - minx
-        miny = padding
-        maxy = height - padding
+        miny = padtop
+        maxy = height - padbottom
         ysize = maxy - miny
         maxval = 0
         maxsize = 0
@@ -267,17 +270,18 @@ class BOSDialog(QDialog, FORM_CLASS):
                 maxsize = size
         self.showInfo("Maxval: " + str(maxval) + " Maxsize: " + str(maxsize) + " Steps: " + str(len(sizes)))
         # Prepare the graph
-        boundingbox = QRect(padding,padding,xsize,ysize)
+        boundingbox = QRect(padleft,padtop,xsize,ysize)
         #rectangle = QRectF(self.BOSGraphicsView.mapToScene(boundingbox))
         #rectangle = self.BOSGraphicsView.mapToScene(boundingbox)
         #self.BOSscene.addRect(rectangle)
+
         # Add vertical lines
         startx = padleft
-        starty = padding
+        starty = padtop
         frompt = QPoint(startx, starty)
         start = QPointF(self.BOSGraphicsView.mapToScene(frompt))
         endx = startx
-        endy = padding + ysize
+        endy = padtop + ysize
         topt = QPoint(endx, endy)
         end = QPointF(self.BOSGraphicsView.mapToScene(topt))
         line = QGraphicsLineItem(QLineF(start, end))
@@ -286,23 +290,32 @@ class BOSDialog(QDialog, FORM_CLASS):
         for i in range(len(sizes)):
             size = sizes[i]
             startx = padleft + xsize * size / maxsize
-            starty = padding
+            starty = padtop
             frompt = QPoint(startx, starty)
             start = QPointF(self.BOSGraphicsView.mapToScene(frompt))
             endx = startx
-            endy = padding + ysize
+            endy = padtop + ysize
             topt = QPoint(endx, endy)
             end = QPointF(self.BOSGraphicsView.mapToScene(topt))
             line = QGraphicsLineItem(QLineF(start, end))
             line.setPen(QPen(QColor(204, 204, 204)))
             self.BOSscene.addItem(line)
+            labeltext = str(sizes[i])
+            label = QGraphicsTextItem()
+            font = QFont()
+            font.setPointSize(6)
+            label.setFont(font)
+            label.setPos(startx-6,ysize+padtop-4)
+            label.setPlainText(labeltext)
+            self.BOSscene.addItem(label)
+
         # Add horizontal lines
         for i in range(11):
             startx = padleft
-            starty = padding + i * ysize/10.0
+            starty = padtop + i * ysize/10.0
             frompt = QPoint(startx, starty)
             start = QPointF(self.BOSGraphicsView.mapToScene(frompt))
-            endx = padding + xsize
+            endx = padleft + xsize
             endy = starty
             topt = QPoint(endx, endy)
             end = QPointF(self.BOSGraphicsView.mapToScene(topt))
@@ -314,7 +327,7 @@ class BOSDialog(QDialog, FORM_CLASS):
             font = QFont()
             font.setPointSize(6)
             label.setFont(font)
-            label.setPos(0,ysize-starty-4)
+            label.setPos(-2,ysize-starty+padtop-4)
             label.setPlainText(labeltext)
             self.BOSscene.addItem(label)
         # Plot Outside input, Inside reference
@@ -326,11 +339,11 @@ class BOSDialog(QDialog, FORM_CLASS):
               first = False
             else:
               startx = padleft + xsize * prevx / maxsize
-              starty = padding + ysize * (1-prevy)
+              starty = padtop + ysize * (1-prevy)
               frompt = QPoint(startx, starty)
               start = QPointF(self.BOSGraphicsView.mapToScene(frompt))
               endx = padleft + xsize * size / maxsize
-              endy = padding + ysize * (1-value)
+              endy = padtop + ysize * (1-value)
               topt = QPoint(endx, endy)
               end = QPointF(self.BOSGraphicsView.mapToScene(topt))
               line = QGraphicsLineItem(QLineF(start, end))
@@ -347,11 +360,11 @@ class BOSDialog(QDialog, FORM_CLASS):
               first = False
             else:
               startx = padleft + xsize * prevx / maxsize
-              starty = padding + ysize * (1-prevy)
+              starty = padtop + ysize * (1-prevy)
               frompt = QPoint(startx, starty)
               start = QPointF(self.BOSGraphicsView.mapToScene(frompt))
               endx = padleft + xsize * size / maxsize
-              endy = padding + ysize * (1-value)
+              endy = padtop + ysize * (1-value)
               topt = QPoint(endx, endy)
               end = QPointF(self.BOSGraphicsView.mapToScene(topt))
               line = QGraphicsLineItem(QLineF(start, end))
@@ -367,23 +380,31 @@ class BOSDialog(QDialog, FORM_CLASS):
               first = False
             else: 
               startx = padleft + xsize * prevx / maxsize
-              starty = padding + ysize * (1-prevy)
+              starty = padtop + ysize * (1-prevy)
               frompt = QPoint(startx, starty)
               start = QPointF(self.BOSGraphicsView.mapToScene(frompt))
-              endx = paleft + xsize * size / maxsize
-              endy = padding + ysize * (1-value)
+              endx = padleft + xsize * size / maxsize
+              endy = padtop + ysize * (1-value)
               topt = QPoint(endx, endy)
               end = QPointF(self.BOSGraphicsView.mapToScene(topt))
               line = QGraphicsLineItem(QLineF(start, end))
               self.BOSscene.addItem(line)
             prevx = size
             prevy = value
-            
+        # Do completeness
+        #plotCompleteness()    
+
       except:
         import traceback
         #self.showInfo("Error plotting")
         self.showInfo(traceback.format_exc())
 
+    #def plotAccuracy(self):
+
+
+    #def plotCompleteness(self):
+    #def plotDisplacement(self):
+    #def plotOscillation(self):
 
     def killWorker(self):
         """Kill the worker thread."""

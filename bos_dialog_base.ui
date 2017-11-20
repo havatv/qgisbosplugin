@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>487</width>
-    <height>865</height>
+    <width>607</width>
+    <height>723</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,7 +36,7 @@
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>250</height>
+         <height>166</height>
         </size>
        </property>
        <property name="html">
@@ -44,7 +44,9 @@
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;The BOS method provides quality measures for the geometries of a line data set based on comparison with a reference (line) data set with significantly higher spatial accuracy. The results are presented as graphs.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;The BOS method provides quality measures for the geometries of a line data set based on comparison with a reference (line) data set with significantly higher spatial accuracy. The results are presented as graphs.&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Tveite, H and Langaas, S.&lt;span style=&quot; font-style:italic;&quot;&gt; An accuracy assessment method for geographical line data sets based on buffering&lt;/span&gt;, International Journal of Geographical Information Science, 13:1, 27-47, DOI: 10.1080/136588199241445&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
@@ -286,7 +288,7 @@ p, li { white-space: pre-wrap; }
      <item>
       <widget class="QGraphicsView" name="BOSGraphicsView">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
          <verstretch>1</verstretch>
         </sizepolicy>
@@ -300,7 +302,7 @@ p, li { white-space: pre-wrap; }
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>304</height>
+         <height>800</height>
         </size>
        </property>
        <property name="verticalScrollBarPolicy">

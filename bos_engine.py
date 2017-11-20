@@ -29,6 +29,7 @@ from qgis.core import QGis
 from qgis.core import QgsVectorLayer, QgsFeature, QgsSpatialIndex
 from qgis.core import QgsFeatureRequest, QgsField, QgsGeometry
 from qgis.core import QgsRectangle, QgsCoordinateTransform
+from qgis.core import QgsMapLayerRegistry
 
 #QGIS 3
 #from qgis.PyQt import QtCore
@@ -121,6 +122,18 @@ class Worker(QtCore.QObject):
 
     def run(self):
         # Create a vector for the statistics
+        # Contents (for each buffer size):
+        #   Area inside ib and inside rb - 
+        #   Area inside ib and outside rb -
+        #   Area outside ib and inside rb -
+        #   Total length of lines in i
+        #   Total length of lines in r
+        #   Total length of lines in i outside rb
+        #   Total length of lines in r inside ib
+        #   Number of areas that are outside ib and outside rb
+
+
+
         statistics = []
         try:
             # Check if the layers look OK
@@ -217,7 +230,7 @@ class Worker(QtCore.QObject):
             for radius in self.radii:
                 #self.status.emit('Radius ' + str(radius))
                 #self.status.emit('Buffer (input) ' + str(radius))
-                blayer = QgsVectorLayer('Polygon:crs='+self.inpvl.crs().authid(), 'inbuff', 'memory')
+                #blayer = QgsVectorLayer('Polygon:crs='+self.inpvl.crs().authid(), 'inbuff', 'memory')
                 #processing.runalg("qgis:fixeddistancebuffer", self.inpvl, radius, 10, True, blayer, progress=None)
                 inpbuff = processing.runalg("qgis:fixeddistancebuffer", self.inpvl, radius, 10, True, None, progress=None)
                 ##self.status.emit('Buffer (input) ' + str(radius) + " finished - " + str(inpbuff['OUTPUT']))
@@ -228,12 +241,13 @@ class Worker(QtCore.QObject):
                 #inpblayer=blayer
                 #self.status.emit('Inp buffer features: ' + str(inpblayer.featureCount()))
                 provider=inpblayer.dataProvider()
-                provider.addAttributes([QgsField('InputB', QVariant.String)])
+                provider.addAttributes([QgsField('InputB', QVariant.String, len=20)])
                 inpblayer.updateFields()
                 #self.status.emit('Attribute added for input ' + str(radius))
 
                 inpblayer.startEditing()
-                new_field_index = inpblayer.fieldNameIndex('InputB')
+                new_field_index = provider.fieldNameIndex('InputB')
+                #new_field_index = inpblayer.fieldNameIndex('InputB')
                 for f in processing.features(inpblayer):
                     inpblayer.changeAttributeValue(f.id(), new_field_index, 'I')
                 inpblayer.commitChanges()
@@ -241,7 +255,7 @@ class Worker(QtCore.QObject):
 
                 ##self.status.emit('Input buffer created')
                 #self.status.emit('Buffer (ref) ' + str(radius))
-                rblayer = QgsVectorLayer('Polygon:crs='+self.inpvl.crs().authid(), "refbuff", "memory")
+                #rblayer = QgsVectorLayer('Polygon:crs='+self.inpvl.crs().authid(), "refbuff", "memory")
                 #processing.runalg("qgis:fixeddistancebuffer", self.refvl, radius, 10, True, rblayer, progress=None)
                 refbuff = processing.runalg("qgis:fixeddistancebuffer", self.refvl, radius, 10, True, None, progress=None)
                 ##self.status.emit('Buffer (ref) ' + str(radius) + ' created - ' + str(refbuff['OUTPUT']))
@@ -253,18 +267,22 @@ class Worker(QtCore.QObject):
                 #refblayer=rblayer
                 #self.status.emit('Ref buffer features: ' + str(refblayer.featureCount()))
                 provider=refblayer.dataProvider()
-                provider.addAttributes([QgsField('RefB', QVariant.String)])
+                newfield = QgsField('RefB', QVariant.String)
+                #newfield.setLength(2)
+                #newfield.setPrecision(2)
+                provider.addAttributes([newfield])
                 refblayer.updateFields()
                 #self.status.emit('Attribute added for ref ' + str(radius))
                 refblayer.startEditing()
-                new_field_index = refblayer.fieldNameIndex('RefB')
+                new_field_index = provider.fieldNameIndex('RefB')
+                #new_field_index = refblayer.fieldNameIndex('RefB')
                 for f in processing.features(refblayer):
                     refblayer.changeAttributeValue(f.id(), new_field_index, 'R')
                 refblayer.commitChanges()
                 #self.status.emit('Attributes set for ref ' + str(radius))
 
                 ##self.status.emit('Reference buffer created')
-                ulayer = QgsVectorLayer('Polygon:crs='+self.inpvl.crs().authid(), "temp_union", "memory")
+                #ulayer = QgsVectorLayer('Polygon:crs='+self.inpvl.crs().authid(), "temp_union", "memory")
                 #processing.runalg("qgis:union", inpblayer, refblayer, ulayer, progress=None)
                 union = processing.runalg("qgis:union", inpblayer, refblayer, None, progress=None)
                 #union = processing.runalg("qgis:union", inpbuff['OUTPUT'], refbuff['OUTPUT'], None, progress=None)
@@ -277,21 +295,72 @@ class Worker(QtCore.QObject):
                 unionlayer=processing.getObject(union['OUTPUT'])
                 #unionlayer=ulayer
                 #self.status.emit('Union features: ' + str(unionlayer.featureCount()))
-                provider=unionlayer.dataProvider()
+
+
+                # Do a union with a generated dataset containing
+                # a single polygon that covers the extent + a margin
+                #coverlayer = QgsVectorLayer('Polygon?crs='+self.inpvl.crs().authid(), 'coverall', 'memory')
+                coverlayer = QgsVectorLayer('Polygon?crs='+self.inpvl.crs().authid()+"&field=CoverL:string(1)", 'coverall', 'memory')
+                #coverlayer = QgsVectorLayer(inpbuff['OUTPUT'], 'coverall', 'memory')
+                coverdp = coverlayer.dataProvider()
+                coverlayer.startEditing()
+                #coverdp.addAttributes([QgsField(name='CoverL', type=QVariant.String, len=20, prec=20)])
+                #coverlayer.updateFields()
+                coverfeature = QgsFeature()
+                covextent = self.inpvl.extent()
+                covextent.combineExtentWith(self.refvl.extent())
+                buff = 0.1
+                cminx = covextent.xMinimum() - buff
+                cmaxx = covextent.xMaximum() + buff
+                cminy = covextent.yMinimum() - buff
+                cmaxy = covextent.yMaximum() + buff
+                polywkt = ("POLYGON ((" + str(cminx) + " " + str(cminy) + "," +
+                                          str(cmaxx) + " " + str(cminy) + "," +
+                                          str(cmaxx) + " " + str(cmaxy) + "," +
+                                          str(cminx) + " " + str(cmaxy) + "," +
+                                          str(cminx) + " " + str(cminy) + "))")
+                covergeom = QgsGeometry.fromWkt(polywkt)
+                #self.status.emit("Covergeom: " + str(covergeom.exportToWkt(5))) #OK
+                coverfeature.setGeometry(covergeom)
+                #coverlayer.startEditing()
+                #fieldindex = coverdp.fieldNameIndex('CoverL')
+                coverfeature.setAttributes(['C'])
+                coverdp.addFeatures([coverfeature])
+                coverlayer.commitChanges()
+                coverlayer.updateExtents()
+                QgsMapLayerRegistry.instance().addMapLayer(coverlayer) # Different thread!!  - QObject::setParent: Cannot set parent, new parent is in a different thread
+                #self.status.emit("Coverlayer: " + str(coverlayer))
+                #covlayer=processing.getObject(coverlayer)
+
+                #unionall = processing.runalg("qgis:union", union['OUTPUT'], coverlayer, None, progress=None)
+
+
+
+                #unionalllayer=processing.getObject(unionall['OUTPUT'])
+                unionalllayer=processing.getObject(union['OUTPUT'])
+
+
+                provider=unionalllayer.dataProvider()
                 provider.addAttributes([QgsField('Area', QVariant.Double)])
-                provider.addAttributes([QgsField('Combined', QVariant.String)])
-                unionlayer.updateFields()
-                unionlayer.startEditing()
-                area_field_index = unionlayer.fieldNameIndex('Area')
-                combined_field_index = unionlayer.fieldNameIndex('Combined')
+                provider.addAttributes([QgsField('Combined', QVariant.String, len=40)])
+                unionalllayer.updateFields()
+                unionalllayer.startEditing()
+                area_field_index = provider.fieldNameIndex('Area')
+                #area_field_index = unionalllayer.fieldNameIndex('Area')
+                combined_field_index = provider.fieldNameIndex('Combined')
+                #combined_field_index = unionalllayer.fieldNameIndex('Combined')
                 #self.status.emit('Preparing union layer ' + str(radius))
-                for f in processing.features(unionlayer):
+                for f in processing.features(unionalllayer):
                     area = f.geometry().area()
-                    unionlayer.changeAttributeValue(f.id(), area_field_index, area)
-                    iidx = unionlayer.fieldNameIndex('InputB')
-                    ridx = unionlayer.fieldNameIndex('RefB')
+                    unionalllayer.changeAttributeValue(f.id(), area_field_index, area)
+                    iidx = provider.fieldNameIndex('InputB')
+                    #iidx = unionalllayer.fieldNameIndex('InputB')
+                    ridx = provider.fieldNameIndex('RefB')
+                    #ridx = unionalllayer.fieldNameIndex('RefB')
+                #    cidx = provider.fieldNameIndex('CoverL')
                     i = f.attributes()[iidx]
                     r = f.attributes()[ridx]
+                #    c = f.attributes()[cidx]
                     comb = ''
                     if i is not None:
                       if r is not None:
@@ -303,8 +372,8 @@ class Worker(QtCore.QObject):
                         comb = str(r)
                       else:
                         comb = None
-                    unionlayer.changeAttributeValue(f.id(), combined_field_index, comb)
-                unionlayer.commitChanges()
+                    unionalllayer.changeAttributeValue(f.id(), combined_field_index, comb)
+                unionalllayer.commitChanges()
                 #self.status.emit('Preparing union layer ' + str(radius) + ' finished')
 
                 #self.status.emit('Doing statistics ' + str(radius))
@@ -313,7 +382,7 @@ class Worker(QtCore.QObject):
                 #                          union['OUTPUT'], 'Area', 'Combined',
                 #                          None, progress=None)
                 stats = processing.runalg('qgis:statisticsbycategories',
-                                          unionlayer, 'Area', 'Combined',
+                                          unionalllayer, 'Area', 'Combined',
                                           None, progress=None)
                 #self.status.emit('Statistics done ' + str(radius) + ' ' + str(stats))
                 ##self.status.emit('Statistics done ' + str(radius))
@@ -326,6 +395,17 @@ class Worker(QtCore.QObject):
                     #self.status.emit('Cat ' + row['category'] + ' ' +  str(row['sum']))
                     currstats[row['category']] = row['sum']
                 
+
+
+                # Do an intersection of r with ib
+                #intersectionrib = processing.runalg("qgis:intersection", self.inpvl, inpblayer, None, progress=None)
+
+                # Do an intersection of i with rb
+                #intersectionirb = processing.runalg("qgis:intersection", self.refvl, refblayer, None, progress=None)
+
+
+
+
                 # stats['OUTPUT'] is the location of the CSV file containing the result
                 #statistics.append([radius, stats['OUTPUT']])
                 statistics.append([radius, currstats])
