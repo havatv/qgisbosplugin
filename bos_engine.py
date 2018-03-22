@@ -120,8 +120,15 @@ class Worker(QtCore.QObject):
         self.increment = 0
 
     def run(self):
+        # mycontext knyttes til denne tråden
+        mycontext = QgsProcessingContext()
+        #mycontext = processing.context() # finnes ikke!!!
+        #mycontext.pushToThread(QThread.currentThread())
+        self.status.emit('context thread: ' + str(mycontext.thread()) + ' ID: ' + str(mycontext.thread().currentThreadId()))
         # Create a vector for the statistics
         statistics = []
+        #self.finished.emit(False, None)
+        #return
         # Testing threads
         self.status.emit('Worker thread: ' + str(QThread.currentThread()) + ' ID: ' + str(QThread.currentThreadId()))
         try:
@@ -217,23 +224,28 @@ class Worker(QtCore.QObject):
             # layer name, distance, segments, dissolve, 
             # output /tmp/test -> /tmp/test.shp - use None to return the (memory) layer.
             for radius in self.radii:
-                #self.status.emit('Radius ' + str(radius))
+                self.status.emit('Radius ' + str(radius))
                 
                 #2# inpbuff = processing.runalg("qgis:fixeddistancebuffer",
                 #2#                         self.inpvl, radius, 10, True, None, progress=None)
-                inpbuff = processing.run("qgis:fixeddistancebuffer", {'INPUT': self.inpvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'DISSOLVE': True, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 0, 'OUTPUT': QgsProcessingOutputLayerDefinition('memory:')},feedback=None)
+                #inpbuff = processing.run("native:buffer", {'INPUT': self.inpvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 1, 'DISSOLVE': True, 'OUTPUT': QgsProcessingOutputLayerDefinition('memory:')},feedback=None)
+                #inpbuff = processing.run("native:buffer", {'INPUT': self.inpvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 1, 'DISSOLVE': True, 'OUTPUT': 'memory:'},feedback=None, context=mycontext)
+                continue
+                inpbuff = processing.run("native:buffer", {'INPUT': self.inpvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 1, 'DISSOLVE': True, 'OUTPUT': 'memory:'})
                         # context=None, onFinish=None, feedback=None
                       #QgsProcessingOutputLayerDefinition('memory:')
                 # Drop all attributes?
                 # Add a distinguising attribute
                 #2# inpblayer=processing.getObject(inpbuff['OUTPUT'])
-                inpblayer=QgsProcessingUtils.mapLayerFromString(inpbuff['OUTPUT'])
+                #inpblayer=QgsProcessingUtils.mapLayerFromString(inpbuff['OUTPUT'])
+                inpblayer=inpbuff['OUTPUT']
                 provider=inpblayer.dataProvider()
                 provider.addAttributes([QgsField('InputB', QVariant.String)])
                 inpblayer.updateFields()
 
                 inpblayer.startEditing()
-                new_field_index = inpblayer.fieldNameIndex('InputB')
+                new_field_index = inpblayer.fields().lookupField('InputB')
+                
                 for f in processing.features(inpblayer):
                     inpblayer.changeAttributeValue(f.id(), new_field_index, 'I')
                 inpblayer.commitChanges()
@@ -260,25 +272,30 @@ class Worker(QtCore.QObject):
             #  })
             #inpbuff = processing.runalg("qgis:fixeddistancebuffer",
             #                            self.inpvl, 10, 10, True, None, progress=myprogress)
-                #self.status.emit('Input buffer created')
+                self.status.emit('Input buffer created')
+                continue
                 #2# refbuff = processing.runalg("qgis:fixeddistancebuffer", self.refvl, radius, 10, True, None, progress=None)
                 #refbuff = processing.run("qgis:fixeddistancebuffer", {'INPUT': self.refvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'DISSOLVE': True, 'OUTPUT': None})
+                refbuff = processing.run("native:buffer", {'INPUT': self.refv, 'DISTANCE': radius, 'SEGMENTS': 10, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 1, 'DISSOLVE': True, 'OUTPUT': QgsProcessingOutputLayerDefinition('memory:')},feedback=None)
                 # Drop all attributes?
                 # Add a distinguising attribute
-                refblayer=processing.getObject(refbuff['OUTPUT'])
+                #refblayer=processing.getObject(refbuff['OUTPUT'])
+                refblayer=refbuff['OUTPUT']
                 provider=refblayer.dataProvider()
                 provider.addAttributes([QgsField('RefB', QVariant.String)])
                 refblayer.updateFields()
                 refblayer.startEditing()
-                new_field_index = refblayer.fieldNameIndex('RefB')
+                new_field_index = refblayer.fields().lookupField('RefB')
                 for f in processing.features(refblayer):
                     refblayer.changeAttributeValue(f.id(), new_field_index, 'R')
                 refblayer.commitChanges()
 
-                #self.status.emit('Reference buffer created')
+                self.status.emit('Reference buffer created')
+                continue
                 #2# union = processing.runalg("qgis:union", inpbuff['OUTPUT'], refbuff['OUTPUT'], None, progress=None)
                 #union = processing.runalg("qgis:union", {'INPUT': inpbuff['OUTPUT'], 'OVERLAY': refbuff['OUTPUT']})
-                #self.status.emit('Union finished')
+                union = processing.runalg("qgis:union", {'INPUT': inpbuff['OUTPUT'], 'OVERLAY': refbuff['OUTPUT'], 'OUTPUT': "memory:"})
+                self.status.emit('Union finished')
 
 #                # Calculate areas:
 #                # Create a category field for statistics
@@ -288,13 +305,13 @@ class Worker(QtCore.QObject):
                 provider.addAttributes([QgsField('Combined', QVariant.String)])
                 unionlayer.updateFields()
                 unionlayer.startEditing()
-                area_field_index = unionlayer.fieldNameIndex('Area')
-                combined_field_index = unionlayer.fieldNameIndex('Combined')
+                area_field_index = unionlayer.fields().lookupField('Area')
+                combined_field_index = unionlayer.fields().lookupField('Combined')
                 for f in processing.features(unionlayer):
                     area = f.geometry().area()
                     unionlayer.changeAttributeValue(f.id(), area_field_index, area)
-                    iidx = unionlayer.fieldNameIndex('InputB')
-                    ridx = unionlayer.fieldNameIndex('RefB')
+                    iidx = unionlayer.fields().lookupField('InputB')
+                    ridx = unionlayer.fields().lookupField('RefB')
                     i = f.attributes()[iidx]
                     r = f.attributes()[ridx]
                     comb = ''

@@ -43,9 +43,10 @@ from qgis.PyQt.QtCore import Qt
 
 
 #2# from qgis.core import QgsMessageLog, QgsMapLayerRegistry
-#2# from qgis.core import QGis
+from qgis.core import Qgis
 #from qgis.core import QgsMapLayer
 from qgis.gui import QgsMessageBar
+from qgis.core import QgsProcessingContext
 
 from qgis.core import QgsMessageLog, QgsProject
 #, QgsWkbTypes
@@ -94,6 +95,10 @@ class BOSDialog(QDialog, FORM_CLASS):
         okButton.clicked.connect(self.startWorker)
 
     def startWorker(self):
+        #plugincontext = QgsProcessingContext().copyThreadSafeSettings()
+        plugincontext = QgsProcessingContext()
+        plugincontext.setProject(QgsProject.instance())
+        self.showInfo("Context: " + str(plugincontext.project().title()))
         """Initialises and starts the worker thread."""
         try:
             layerindex = self.inputLayer.currentIndex()
@@ -155,7 +160,7 @@ class BOSDialog(QDialog, FORM_CLASS):
             # Has to be popped after the thread has finished (in
             # workerFinished).
             self.iface.messageBar().pushWidget(msgBar,
-                                               self.iface.messageBar().INFO)
+                                               Qgis.Info)
             self.messageBar = msgBar
             self.showInfo('GUI thread: ' + str(QThread.currentThread()) + ' ID: ' + str(QThread.currentThreadId()))
             # start the worker in a new thread
@@ -195,7 +200,7 @@ class BOSDialog(QDialog, FORM_CLASS):
             stats = ret
             self.showInfo(str(ret))
             QgsMessageLog.logMessage(self.tr('BOS finished'),
-                                     self.BOS, QgsMessageLog.INFO)
+                                     self.BOS, Qgis.Info)
         else:
             # notify the user that something went wrong
             if not ok:
@@ -221,22 +226,22 @@ class BOSDialog(QDialog, FORM_CLASS):
     def workerInfo(self, message_string):
         """Report an info message from the worker."""
         QgsMessageLog.logMessage(self.tr('Worker') + ': ' + message_string,
-                                 self.BOS, QgsMessageLog.INFO)
+                                 self.BOS, Qgis.Info)
 
     def showError(self, text):
         """Show an error."""
         self.iface.messageBar().pushMessage(self.tr('Error'), text,
-                                            level=QgsMessageBar.CRITICAL,
+                                            level=Qgis.Critical,
                                             duration=3)
         QgsMessageLog.logMessage('Error: ' + text, self.BOS,
-                                 QgsMessageLog.CRITICAL)
+                                 Qgis.Critical)
 
     def showInfo(self, text):
         """Show info."""
         self.iface.messageBar().pushMessage(self.tr('Info'), text,
-                                            level=QgsMessageBar.INFO,
+                                            level=Qgis.Info,
                                             duration=2)
         QgsMessageLog.logMessage('Info: ' + text, self.BOS,
-                                 QgsMessageLog.INFO)
+                                 Qgis.Info)
 
 
