@@ -228,6 +228,8 @@ class Worker(QtCore.QObject):
             # layer name, distance, segments, dissolve, 
             # output /tmp/test -> /tmp/test.shp - use None to return the (memory) layer.
             for radius in self.radii:
+                if self.abort:
+                    break
                 #self.status.emit('Radius ' + str(radius))
                 #self.status.emit('Buffer (input) ' + str(radius))
                 #blayer = QgsVectorLayer('Polygon:crs='+self.inpvl.crs().authid(), 'inbuff', 'memory')
@@ -254,6 +256,8 @@ class Worker(QtCore.QObject):
                 #self.status.emit('Attribute set for input ' + str(radius))
 
                 ##self.status.emit('Input buffer created')
+                if self.abort:
+                    break
                 #self.status.emit('Buffer (ref) ' + str(radius))
                 #rblayer = QgsVectorLayer('Polygon:crs='+self.inpvl.crs().authid(), "refbuff", "memory")
                 #processing.runalg("qgis:fixeddistancebuffer", self.refvl, radius, 10, True, rblayer, progress=None)
@@ -283,6 +287,8 @@ class Worker(QtCore.QObject):
 
                 ##self.status.emit('Reference buffer created')
                 #ulayer = QgsVectorLayer('Polygon:crs='+self.inpvl.crs().authid(), "temp_union", "memory")
+                if self.abort:
+                    break
                 #processing.runalg("qgis:union", inpblayer, refblayer, ulayer, progress=None)
                 union = processing.runalg("qgis:union", inpblayer, refblayer, None, progress=None)
                 #union = processing.runalg("qgis:union", inpbuff['OUTPUT'], refbuff['OUTPUT'], None, progress=None)
@@ -297,6 +303,8 @@ class Worker(QtCore.QObject):
                 #self.status.emit('Union features: ' + str(unionlayer.featureCount()))
 
 
+                if self.abort:
+                    break
                 # Do a union with a generated dataset containing
                 # a single polygon that covers the extent + a margin
                 #coverlayer = QgsVectorLayer('Polygon?crs='+self.inpvl.crs().authid(), 'coverall', 'memory')
@@ -410,7 +418,7 @@ class Worker(QtCore.QObject):
                 #statistics.append([radius, stats['OUTPUT']])
                 statistics.append([radius, currstats])
                 #self.status.emit('Statistics added ' + str(radius))
-		continue
+                #continue
                 # Reporting progress to the UI thread and showing it in the UI thread crashes QGIS
                 self.calculate_progress()
             
