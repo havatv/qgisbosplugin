@@ -56,6 +56,9 @@ from qgis.core import QgsMessageLog, QgsProject
 #from sys.path import append
 #append(dirname(__file__))
 
+from processing.tools import dataobjects
+
+
 from .bos_engine import Worker
 
 FORM_CLASS, _ = uic.loadUiType(join(
@@ -144,8 +147,9 @@ class BOSDialog(QDialog, FORM_CLASS):
             self.showInfo(str(radii))
             selectedinputonly = self.selectedFeaturesCheckBox.isChecked()
             selectedrefonly = self.selectedRefFeaturesCheckBox.isChecked()
+            plugincontext = dataobjects.createContext()
             # create a new worker instance
-            worker = Worker(inputlayer, reflayer, radii,
+            worker = Worker(inputlayer, reflayer, plugincontext, radii,
                             selectedinputonly, selectedrefonly)
             # configure the QgsMessageBar
             msgBar = self.iface.messageBar().createMessage(

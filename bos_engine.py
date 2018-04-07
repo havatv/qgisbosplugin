@@ -27,6 +27,11 @@ from qgis.core import QgsMessageLog
 #from qgis.core import QgsVectorLayer, QgsFeature, QgsSpatialIndex
 #from qgis.core import QgsFeatureRequest, QgsGeometry
 from qgis.core import QgsField
+#from qgis.core import QgsTask   # ok
+from qgis.core import QgsProcessingAlgRunnerTask   # ok
+from qgis.core import QgsApplication   # ok
+from processing.tools import dataobjects
+from time import sleep
 #from qgis.core import QgsRectangle, QgsCoordinateTransform
 from qgis.core import QgsProcessingOutputLayerDefinition
 from qgis.core import QgsProcessingUtils
@@ -77,6 +82,7 @@ class Worker(QtCore.QObject):
 
 
     def __init__(self, inputvectorlayer, refvectorlayer,
+                 pluginctx,
                  #outputlayername, refprefix,
                  #distancefieldname="distance",
                  #approximateinputgeom=False,
@@ -100,6 +106,7 @@ class Worker(QtCore.QObject):
         # Creating instance variables from the parameters
         self.inpvl = inputvectorlayer
         self.refvl = refvectorlayer
+        self.plugincontext = pluginctx
         self.selectedinonly = selectedinputonly
         self.selectedjoonly = selectedrefonly
         self.radii = radii
@@ -221,11 +228,42 @@ class Worker(QtCore.QObject):
 
             buffsize = 10.0
 
+            def on_complete(ok, results):
+                    if ok:
+                        #self.emit('Execution completed')
+                        #self.emit(results)
+                        i = 1
+                    else:
+                        #self.emit('Execution failed')
+                        i = 0
+
             # layer name, distance, segments, dissolve, 
             # output /tmp/test -> /tmp/test.shp - use None to return the (memory) layer.
             for radius in self.radii:
+<<<<<<< HEAD
                 self.status.emit('Radius ' + str(radius))
                 
+=======
+                #self.status.emit('Radius ' + str(radius))
+
+
+                # task = QgsProcessingAlgRunnerTask(self.algorithm(), parameters, context, feedback)
+                # Må lage en "algorithm" fra tekststrengen.
+                alg = QgsApplication.processingRegistry().algorithmById('qgis:fixeddistancebuffer')
+                # Må fikse en context...
+                contxt = dataobjects.createContext()
+                # QgsApplication.processingRegistry().algorithms()
+                task = QgsProcessingAlgRunnerTask(alg, {'INPUT': self.inpvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'DISSOLVE': True, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 0, 'OUTPUT': QgsProcessingOutputLayerDefinition('memory:')}, contxt, feedback=None)
+                task.executed.connect(on_complete)
+                QgsApplication.taskManager().addTask(task)
+                # Crashes - trouble with threads?
+
+                # How to wait for the task to finish? - see below:
+                # (QgsApplication.taskManager().countActiveTasks()
+
+
+                continue
+>>>>>>> 8ffc3b578b358245e82f1e46df4614c24a324180
                 #2# inpbuff = processing.runalg("qgis:fixeddistancebuffer",
                 #2#                         self.inpvl, radius, 10, True, None, progress=None)
                 #inpbuff = processing.run("native:buffer", {'INPUT': self.inpvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 1, 'DISSOLVE': True, 'OUTPUT': QgsProcessingOutputLayerDefinition('memory:')},feedback=None)
@@ -331,7 +369,9 @@ class Worker(QtCore.QObject):
                 statistics.append([radius, stats['OUTPUT']])
                 self.calculate_progress()
             
-
+            # Wait for all the tasks to finish
+            while QgsApplication.taskManager().countActiveTasks() > 0:
+                sleep(1)
 
             #self.status.emit('Worker finished')
         except:
