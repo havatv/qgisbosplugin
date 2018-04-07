@@ -29,7 +29,7 @@ from qgis.core import QGis
 from qgis.core import QgsVectorLayer, QgsFeature, QgsSpatialIndex
 from qgis.core import QgsFeatureRequest, QgsField, QgsGeometry
 from qgis.core import QgsRectangle, QgsCoordinateTransform
-from qgis.core import QgsMapLayerRegistry
+#from qgis.core import QgsMapLayerRegistry
 
 #QGIS 3
 #from qgis.PyQt import QtCore
@@ -230,7 +230,7 @@ class Worker(QtCore.QObject):
             for radius in self.radii:
                 if self.abort:
                     break
-                #self.status.emit('Radius ' + str(radius))
+                self.status.emit('Radius ' + str(radius))
                 #self.status.emit('Buffer (input) ' + str(radius))
                 #blayer = QgsVectorLayer('Polygon:crs='+self.inpvl.crs().authid(), 'inbuff', 'memory')
                 #processing.runalg("qgis:fixeddistancebuffer", self.inpvl, radius, 10, True, blayer, progress=None)
@@ -241,9 +241,9 @@ class Worker(QtCore.QObject):
                 # Add a distinguishing attribute
                 inpblayer=processing.getObject(inpbuff['OUTPUT'])
                 #inpblayer=blayer
-                #self.status.emit('Inp buffer features: ' + str(inpblayer.featureCount()))
+                self.status.emit('Inp buffer features: ' + str(inpblayer.featureCount()))
                 provider=inpblayer.dataProvider()
-                provider.addAttributes([QgsField('InputB', QVariant.String, len=20)])
+                provider.addAttributes([QgsField('InputB', QVariant.String, len=5)])
                 inpblayer.updateFields()
                 #self.status.emit('Attribute added for input ' + str(radius))
 
@@ -269,9 +269,9 @@ class Worker(QtCore.QObject):
                 # Add a distinguishing attribute
                 refblayer=processing.getObject(refbuff['OUTPUT'])
                 #refblayer=rblayer
-                #self.status.emit('Ref buffer features: ' + str(refblayer.featureCount()))
+                self.status.emit('Ref buffer features: ' + str(refblayer.featureCount()))
                 provider=refblayer.dataProvider()
-                newfield = QgsField('RefB', QVariant.String)
+                newfield = QgsField('RefB', QVariant.String, len=5)
                 #newfield.setLength(2)
                 #newfield.setPrecision(2)
                 provider.addAttributes([newfield])
@@ -292,7 +292,7 @@ class Worker(QtCore.QObject):
                 #processing.runalg("qgis:union", inpblayer, refblayer, ulayer, progress=None)
                 union = processing.runalg("qgis:union", inpblayer, refblayer, None, progress=None)
                 #union = processing.runalg("qgis:union", inpbuff['OUTPUT'], refbuff['OUTPUT'], None, progress=None)
-                #self.status.emit('Union finished ' + str(radius))
+                self.status.emit('Union finished ' + str(radius))
 		#continue
                 ##self.status.emit('Union finished')
 
@@ -307,36 +307,36 @@ class Worker(QtCore.QObject):
                     break
                 # Do a union with a generated dataset containing
                 # a single polygon that covers the extent + a margin
-                #coverlayer = QgsVectorLayer('Polygon?crs='+self.inpvl.crs().authid(), 'coverall', 'memory')
-                coverlayer = QgsVectorLayer('Polygon?crs='+self.inpvl.crs().authid()+"&field=CoverL:string(1)", 'coverall', 'memory')
-                #coverlayer = QgsVectorLayer(inpbuff['OUTPUT'], 'coverall', 'memory')
-                coverdp = coverlayer.dataProvider()
-                coverlayer.startEditing()
-                #coverdp.addAttributes([QgsField(name='CoverL', type=QVariant.String, len=20, prec=20)])
-                #coverlayer.updateFields()
-                coverfeature = QgsFeature()
-                covextent = self.inpvl.extent()
-                covextent.combineExtentWith(self.refvl.extent())
-                buff = 0.1
-                cminx = covextent.xMinimum() - buff
-                cmaxx = covextent.xMaximum() + buff
-                cminy = covextent.yMinimum() - buff
-                cmaxy = covextent.yMaximum() + buff
-                polywkt = ("POLYGON ((" + str(cminx) + " " + str(cminy) + "," +
-                                          str(cmaxx) + " " + str(cminy) + "," +
-                                          str(cmaxx) + " " + str(cmaxy) + "," +
-                                          str(cminx) + " " + str(cmaxy) + "," +
-                                          str(cminx) + " " + str(cminy) + "))")
-                covergeom = QgsGeometry.fromWkt(polywkt)
-                #self.status.emit("Covergeom: " + str(covergeom.exportToWkt(5))) #OK
-                coverfeature.setGeometry(covergeom)
-                #coverlayer.startEditing()
-                #fieldindex = coverdp.fieldNameIndex('CoverL')
-                coverfeature.setAttributes(['C'])
-                coverdp.addFeatures([coverfeature])
-                coverlayer.commitChanges()
-                coverlayer.updateExtents()
-                QgsMapLayerRegistry.instance().addMapLayer(coverlayer) # Different thread!!  - QObject::setParent: Cannot set parent, new parent is in a different thread
+                # #coverlayer = QgsVectorLayer('Polygon?crs='+self.inpvl.crs().authid(), 'coverall', 'memory')
+                # coverlayer = QgsVectorLayer('Polygon?crs='+self.inpvl.crs().authid()+"&field=CoverL:string(1)", 'coverall', 'memory')
+                # #coverlayer = QgsVectorLayer(inpbuff['OUTPUT'], 'coverall', 'memory')
+                # coverdp = coverlayer.dataProvider()
+                # coverlayer.startEditing()
+                # #coverdp.addAttributes([QgsField(name='CoverL', type=QVariant.String, len=20, prec=20)])
+                # #coverlayer.updateFields()
+                # coverfeature = QgsFeature()
+                # covextent = self.inpvl.extent()
+                # covextent.combineExtentWith(self.refvl.extent())
+                # buff = 0.1
+                # cminx = covextent.xMinimum() - buff
+                # cmaxx = covextent.xMaximum() + buff
+                # cminy = covextent.yMinimum() - buff
+                # cmaxy = covextent.yMaximum() + buff
+                # polywkt = ("POLYGON ((" + str(cminx) + " " + str(cminy) + "," +
+                #                           str(cmaxx) + " " + str(cminy) + "," +
+                #                           str(cmaxx) + " " + str(cmaxy) + "," +
+                #                           str(cminx) + " " + str(cmaxy) + "," +
+                #                           str(cminx) + " " + str(cminy) + "))")
+                # covergeom = QgsGeometry.fromWkt(polywkt)
+                # #self.status.emit("Covergeom: " + str(covergeom.exportToWkt(5))) #OK
+                # coverfeature.setGeometry(covergeom)
+                # #coverlayer.startEditing()
+                # #fieldindex = coverdp.fieldNameIndex('CoverL')
+                # coverfeature.setAttributes(['C'])
+                # coverdp.addFeatures([coverfeature])
+                # coverlayer.commitChanges()
+                # coverlayer.updateExtents()
+                # QgsMapLayerRegistry.instance().addMapLayer(coverlayer) # Different thread!!  - QObject::setParent: Cannot set parent, new parent is in a different thread
                 #self.status.emit("Coverlayer: " + str(coverlayer))
                 #covlayer=processing.getObject(coverlayer)
 
