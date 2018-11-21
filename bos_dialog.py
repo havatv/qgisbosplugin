@@ -217,6 +217,200 @@ class BOSDialog(QDialog, FORM_CLASS):
         self.button_box.button(QDialogButtonBox.Cancel).setEnabled(False)
         # End of workerFinished
 
+
+    # Very incomplete!
+    def showPlots(self, stats):
+      try:
+        #BOSGraphicsView
+        self.BOSscene.clear()
+        viewprect = QRectF(self.BOSGraphicsView.viewport().rect())
+        self.BOSGraphicsView.setSceneRect(viewprect)
+        bottom = self.BOSGraphicsView.sceneRect().bottom()
+        top = self.BOSGraphicsView.sceneRect().top()
+        left = self.BOSGraphicsView.sceneRect().left()
+        right = self.BOSGraphicsView.sceneRect().right()
+        height = bottom - top
+        width = right - left
+        size = width
+        self.showInfo("Top: " + str(top) + " Bottom: " + str(bottom) + " Left: " + str(left))
+        if width > height:
+            size = height
+        padding = 3
+        padleft = 23
+        padright = 6
+        padbottom = 10
+        padtop = 6
+
+        minx = padleft
+        maxx = width - padright
+        xsize = maxx - minx
+        miny = padtop
+        maxy = height - padbottom
+        ysize = maxy - miny
+        maxval = 0
+        maxsize = 0
+        sizes = []
+        normoiirsizes = []
+        normiiirsizes = []
+        normiiorsizes = []
+        sums = []
+        for stat in stats:
+            sizet, sizestats = stat
+            size = float(sizet)
+            sizes.append(size)
+            oiir, iiir, iior = sizestats
+            oiir = float(sizestats['NULLR'])
+            iiir = float(sizestats['IR'])
+            iior = float(sizestats['INULL'])
+            sum = oiir + iiir + iior
+            normoiirsizes.append(oiir/sum)
+            normiiirsizes.append(iiir/sum)
+            normiiorsizes.append(iior/sum)
+            #self.showInfo("OIIR: " + str(oiir) + " IIIR: " + str(iiir) + " IIOR: " + str(iior))
+            if maxval < oiir:
+                maxval = oiir
+            if maxval < iiir:
+                maxval = iiir
+            if maxval < iior:
+                maxval = iior
+            if maxsize < size:
+                maxsize = size
+        self.showInfo("Maxval: " + str(maxval) + " Maxsize: " + str(maxsize) + " Steps: " + str(len(sizes)))
+        # Prepare the graph
+        boundingbox = QRect(padleft,padtop,xsize,ysize)
+        #rectangle = QRectF(self.BOSGraphicsView.mapToScene(boundingbox))
+        #rectangle = self.BOSGraphicsView.mapToScene(boundingbox)
+        #self.BOSscene.addRect(rectangle)
+
+        # Add vertical lines
+        startx = padleft
+        starty = padtop
+        frompt = QPoint(startx, starty)
+        start = QPointF(self.BOSGraphicsView.mapToScene(frompt))
+        endx = startx
+        endy = padtop + ysize
+        topt = QPoint(endx, endy)
+        end = QPointF(self.BOSGraphicsView.mapToScene(topt))
+        line = QGraphicsLineItem(QLineF(start, end))
+        line.setPen(QPen(QColor(204, 204, 204)))
+        self.BOSscene.addItem(line)
+        for i in range(len(sizes)):
+            size = sizes[i]
+            startx = padleft + xsize * size / maxsize
+            starty = padtop
+            frompt = QPoint(startx, starty)
+            start = QPointF(self.BOSGraphicsView.mapToScene(frompt))
+            endx = startx
+            endy = padtop + ysize
+            topt = QPoint(endx, endy)
+            end = QPointF(self.BOSGraphicsView.mapToScene(topt))
+            line = QGraphicsLineItem(QLineF(start, end))
+            line.setPen(QPen(QColor(204, 204, 204)))
+            self.BOSscene.addItem(line)
+            labeltext = str(sizes[i])
+            label = QGraphicsTextItem()
+            font = QFont()
+            font.setPointSize(6)
+            label.setFont(font)
+            label.setPos(startx-6,ysize+padtop-4)
+            label.setPlainText(labeltext)
+            self.BOSscene.addItem(label)
+
+        # Add horizontal lines
+        for i in range(11):
+            startx = padleft
+            starty = padtop + i * ysize/10.0
+            frompt = QPoint(startx, starty)
+            start = QPointF(self.BOSGraphicsView.mapToScene(frompt))
+            endx = padleft + xsize
+            endy = starty
+            topt = QPoint(endx, endy)
+            end = QPointF(self.BOSGraphicsView.mapToScene(topt))
+            line = QGraphicsLineItem(QLineF(start, end))
+            line.setPen(QPen(QColor(204, 204, 204)))
+            self.BOSscene.addItem(line)
+            labeltext = str(i*10)+'%'
+            label = QGraphicsTextItem()
+            font = QFont()
+            font.setPointSize(6)
+            label.setFont(font)
+            label.setPos(-2,ysize-starty+padtop-4)
+            label.setPlainText(labeltext)
+            self.BOSscene.addItem(label)
+        # Plot Outside input, Inside reference
+	first = True
+        for i in range(len(sizes)):
+            size = sizes[i]
+            value = normoiirsizes[i]
+            if first:
+              first = False
+            else:
+              startx = padleft + xsize * prevx / maxsize
+              starty = padtop + ysize * (1-prevy)
+              frompt = QPoint(startx, starty)
+              start = QPointF(self.BOSGraphicsView.mapToScene(frompt))
+              endx = padleft + xsize * size / maxsize
+              endy = padtop + ysize * (1-value)
+              topt = QPoint(endx, endy)
+              end = QPointF(self.BOSGraphicsView.mapToScene(topt))
+              line = QGraphicsLineItem(QLineF(start, end))
+              line.setPen(QPen(self.ringcolour))
+              self.BOSscene.addItem(line)
+            prevx = size
+            prevy = value
+        # Plot Inside input, Inside reference
+	first = True
+        for i in range(len(sizes)):
+            size = sizes[i]
+            value = normiiirsizes[i]
+            if first:
+              first = False
+            else:
+              startx = padleft + xsize * prevx / maxsize
+              starty = padtop + ysize * (1-prevy)
+              frompt = QPoint(startx, starty)
+              start = QPointF(self.BOSGraphicsView.mapToScene(frompt))
+              endx = padleft + xsize * size / maxsize
+              endy = padtop + ysize * (1-value)
+              topt = QPoint(endx, endy)
+              end = QPointF(self.BOSGraphicsView.mapToScene(topt))
+              line = QGraphicsLineItem(QLineF(start, end))
+              self.BOSscene.addItem(line)
+            prevx = size
+            prevy = value
+        # Plot Inside input, Outside reference
+	first = True
+        for i in range(len(sizes)):
+            size = sizes[i]
+            value = normiiorsizes[i]
+            if first:
+              first = False
+            else: 
+              startx = padleft + xsize * prevx / maxsize
+              starty = padtop + ysize * (1-prevy)
+              frompt = QPoint(startx, starty)
+              start = QPointF(self.BOSGraphicsView.mapToScene(frompt))
+              endx = padleft + xsize * size / maxsize
+              endy = padtop + ysize * (1-value)
+              topt = QPoint(endx, endy)
+              end = QPointF(self.BOSGraphicsView.mapToScene(topt))
+              line = QGraphicsLineItem(QLineF(start, end))
+              self.BOSscene.addItem(line)
+            prevx = size
+            prevy = value
+        # Do completeness
+        #plotCompleteness()    
+
+      except:
+        import traceback
+        #self.showInfo("Error plotting")
+        self.showInfo(traceback.format_exc())
+
+
+
+
+
+
     def killWorker(self):
         """Kill the worker thread."""
         if self.worker is not None:
