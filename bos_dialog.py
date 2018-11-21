@@ -35,11 +35,25 @@ from os.path import join
 #2# from PyQt4.QtGui import QMessageBox
 #2# from PyQt4.QtGui import QPushButton
 from qgis.PyQt import uic
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtCore import QCoreApplication, QObject, QThread
+
+from qgis.PyQt.QtCore import QPointF, QLineF, QRectF, QPoint, QSettings
+from qgis.PyQt.QtCore import QSizeF, QSize, QRect
+from qgis.PyQt.QtWidgets import QGraphicsLineItem, QGraphicsEllipseItem, QGraphicsTextItem
+from qgis.PyQt.QtGui import QFont
+
+
 #from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QDialog, QDialogButtonBox
 from qgis.PyQt.QtWidgets import QPushButton, QProgressBar, QMessageBox
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtWidgets import QGraphicsScene
+from qgis.PyQt.QtWidgets import QGraphicsView
+#
+from qgis.PyQt.QtGui import QBrush, QPen, QColor
+from qgis.PyQt.QtGui import QPainter
+from qgis.PyQt.QtPrintSupport import QPrinter
+#from qgis.PyQt.QtGui import QApplication, QImage, QPixmap
 
 
 #2# from qgis.core import QgsMessageLog, QgsMapLayerRegistry
@@ -93,9 +107,12 @@ class BOSDialog(QDialog, FORM_CLASS):
         cancelButton.setText(self.CANCEL)
         helpButton = self.helpButton
         helpButton.setText(self.HELP)
+        self.BOSscene = QGraphicsScene(self)
+        self.BOSGraphicsView.setScene(self.BOSscene)
 
         # Connect signals
         okButton.clicked.connect(self.startWorker)
+        self.ringcolour = QColor(153, 153, 255)
 
     def startWorker(self):
         #plugincontext = QgsProcessingContext().copyThreadSafeSettings()
@@ -267,9 +284,9 @@ class BOSDialog(QDialog, FORM_CLASS):
             size = float(sizet)
             sizes.append(size)
             oiir, iiir, iior = sizestats
-            oiir = float(sizestats['NULLR'])
+            oiir = float(sizestats['R'])
             iiir = float(sizestats['IR'])
-            iior = float(sizestats['INULL'])
+            iior = float(sizestats['I'])
             sum = oiir + iiir + iior
             normoiirsizes.append(oiir/sum)
             normiiirsizes.append(iiir/sum)
