@@ -199,6 +199,7 @@ class BOSDialog(QDialog, FORM_CLASS):
         self.thread.deleteLater()
         # remove widget from message bar (pop)
         self.iface.messageBar().popWidget(self.messageBar)
+        self.showInfo("showinfo - ret: " + str(ret))
         if ok and ret is not None:
             # report the result
             stats = ret
@@ -215,11 +216,18 @@ class BOSDialog(QDialog, FORM_CLASS):
         self.button_box.button(QDialogButtonBox.Ok).setEnabled(True)
         self.button_box.button(QDialogButtonBox.Close).setEnabled(True)
         self.button_box.button(QDialogButtonBox.Cancel).setEnabled(False)
+        # Do the plotting
+        #self.showInfo("Try to plot - " + str(ok) + " ret: " + str (ret))
+        #QgsMessageLog.logMessage("Try to plot - " + str(ok) + " ret: " + str (ret),
+        #                             self.BOS, Qgis.Info)
+        if ok and ret is not None:
+            self.showPlots(ret)
         # End of workerFinished
 
 
     # Very incomplete!
     def showPlots(self, stats):
+      self.showInfo("Showplots")
       try:
         #BOSGraphicsView
         self.BOSscene.clear()
@@ -338,7 +346,7 @@ class BOSDialog(QDialog, FORM_CLASS):
             label.setPlainText(labeltext)
             self.BOSscene.addItem(label)
         # Plot Outside input, Inside reference
-	first = True
+        first = True
         for i in range(len(sizes)):
             size = sizes[i]
             value = normoiirsizes[i]
@@ -359,7 +367,7 @@ class BOSDialog(QDialog, FORM_CLASS):
             prevx = size
             prevy = value
         # Plot Inside input, Inside reference
-	first = True
+        first = True
         for i in range(len(sizes)):
             size = sizes[i]
             value = normiiirsizes[i]
@@ -379,7 +387,7 @@ class BOSDialog(QDialog, FORM_CLASS):
             prevx = size
             prevy = value
         # Plot Inside input, Outside reference
-	first = True
+        first = True
         for i in range(len(sizes)):
             size = sizes[i]
             value = normiiorsizes[i]
