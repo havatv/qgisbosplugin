@@ -27,7 +27,6 @@ from qgis.core import QgsMessageLog
 #from qgis.core import QgsVectorLayer, QgsFeature, QgsSpatialIndex
 #from qgis.core import QgsFeatureRequest, QgsGeometry
 from qgis.core import QgsField
-#from qgis.core import QgsTask   # ok
 from qgis.core import QgsProcessingAlgRunnerTask   # ok
 from qgis.core import QgsApplication   # ok
 from processing.tools import dataobjects
@@ -177,7 +176,7 @@ class Worker(QtCore.QObject):
             # This is not used for anything yet
             self.inputmulti = False
             if self.selectedinonly:
-                feats = self.inpvl.selectedFeaturesIterator()
+                feats = self.inpvl.getSelectedFeatures()
             else:
                 feats = self.inpvl.getFeatures()
             if feats is not None:
@@ -240,35 +239,13 @@ class Worker(QtCore.QObject):
             # layer name, distance, segments, dissolve, 
             # output /tmp/test -> /tmp/test.shp - use None to return the (memory) layer.
             for radius in self.radii:
-<<<<<<< HEAD
                 self.status.emit('Radius ' + str(radius))
                 
-=======
-                #self.status.emit('Radius ' + str(radius))
-
-
-                # task = QgsProcessingAlgRunnerTask(self.algorithm(), parameters, context, feedback)
-                # Må lage en "algorithm" fra tekststrengen.
-                alg = QgsApplication.processingRegistry().algorithmById('qgis:fixeddistancebuffer')
-                # Må fikse en context...
-                contxt = dataobjects.createContext()
-                # QgsApplication.processingRegistry().algorithms()
-                task = QgsProcessingAlgRunnerTask(alg, {'INPUT': self.inpvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'DISSOLVE': True, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 0, 'OUTPUT': QgsProcessingOutputLayerDefinition('memory:')}, contxt, feedback=None)
-                task.executed.connect(on_complete)
-                QgsApplication.taskManager().addTask(task)
-                # Crashes - trouble with threads?
-
-                # How to wait for the task to finish? - see below:
-                # (QgsApplication.taskManager().countActiveTasks()
-
-
-                continue
->>>>>>> 8ffc3b578b358245e82f1e46df4614c24a324180
                 #2# inpbuff = processing.runalg("qgis:fixeddistancebuffer",
                 #2#                         self.inpvl, radius, 10, True, None, progress=None)
                 #inpbuff = processing.run("native:buffer", {'INPUT': self.inpvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 1, 'DISSOLVE': True, 'OUTPUT': QgsProcessingOutputLayerDefinition('memory:')},feedback=None)
                 #inpbuff = processing.run("native:buffer", {'INPUT': self.inpvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 1, 'DISSOLVE': True, 'OUTPUT': 'memory:'},feedback=None, context=mycontext)
-                continue
+                #continue
                 inpbuff = processing.run("native:buffer", {'INPUT': self.inpvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 1, 'DISSOLVE': True, 'OUTPUT': 'memory:'})
                         # context=None, onFinish=None, feedback=None
                       #QgsProcessingOutputLayerDefinition('memory:')
@@ -284,7 +261,8 @@ class Worker(QtCore.QObject):
                 inpblayer.startEditing()
                 new_field_index = inpblayer.fields().lookupField('InputB')
                 
-                for f in processing.features(inpblayer):
+                #for f in processing.features(inpblayer):
+                for f in provider.getFeatures():
                     inpblayer.changeAttributeValue(f.id(), new_field_index, 'I')
                 inpblayer.commitChanges()
 
@@ -311,10 +289,10 @@ class Worker(QtCore.QObject):
             #inpbuff = processing.runalg("qgis:fixeddistancebuffer",
             #                            self.inpvl, 10, 10, True, None, progress=myprogress)
                 self.status.emit('Input buffer created')
-                continue
+                #continue
                 #2# refbuff = processing.runalg("qgis:fixeddistancebuffer", self.refvl, radius, 10, True, None, progress=None)
                 #refbuff = processing.run("qgis:fixeddistancebuffer", {'INPUT': self.refvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'DISSOLVE': True, 'OUTPUT': None})
-                refbuff = processing.run("native:buffer", {'INPUT': self.refv, 'DISTANCE': radius, 'SEGMENTS': 10, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 1, 'DISSOLVE': True, 'OUTPUT': QgsProcessingOutputLayerDefinition('memory:')},feedback=None)
+                refbuff = processing.run("native:buffer", {'INPUT': self.refvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 1, 'DISSOLVE': True, 'OUTPUT': QgsProcessingOutputLayerDefinition('memory:')},feedback=None)
                 # Drop all attributes?
                 # Add a distinguising attribute
                 #refblayer=processing.getObject(refbuff['OUTPUT'])
@@ -324,20 +302,22 @@ class Worker(QtCore.QObject):
                 refblayer.updateFields()
                 refblayer.startEditing()
                 new_field_index = refblayer.fields().lookupField('RefB')
-                for f in processing.features(refblayer):
+                #for f in processing.features(refblayer):
+                for f in provider.getFeatures():
                     refblayer.changeAttributeValue(f.id(), new_field_index, 'R')
                 refblayer.commitChanges()
 
                 self.status.emit('Reference buffer created')
-                continue
+                #continue
                 #2# union = processing.runalg("qgis:union", inpbuff['OUTPUT'], refbuff['OUTPUT'], None, progress=None)
                 #union = processing.runalg("qgis:union", {'INPUT': inpbuff['OUTPUT'], 'OVERLAY': refbuff['OUTPUT']})
-                union = processing.runalg("qgis:union", {'INPUT': inpbuff['OUTPUT'], 'OVERLAY': refbuff['OUTPUT'], 'OUTPUT': "memory:"})
+                union = processing.run("qgis:union", {'INPUT': inpbuff['OUTPUT'], 'OVERLAY': refbuff['OUTPUT'], 'OUTPUT': "memory:"})
                 self.status.emit('Union finished')
 
 #                # Calculate areas:
 #                # Create a category field for statistics
-                unionlayer=processing.getObject(union['OUTPUT'])
+                unionlayer=union['OUTPUT']
+                #unionlayer=processing.getObject(union['OUTPUT'])
                 provider=unionlayer.dataProvider()
                 provider.addAttributes([QgsField('Area', QVariant.Double)])
                 provider.addAttributes([QgsField('Combined', QVariant.String)])
@@ -345,7 +325,8 @@ class Worker(QtCore.QObject):
                 unionlayer.startEditing()
                 area_field_index = unionlayer.fields().lookupField('Area')
                 combined_field_index = unionlayer.fields().lookupField('Combined')
-                for f in processing.features(unionlayer):
+                #for f in processing.features(unionlayer):
+                for f in provider.getFeatures():
                     area = f.geometry().area()
                     unionlayer.changeAttributeValue(f.id(), area_field_index, area)
                     iidx = unionlayer.fields().lookupField('InputB')
@@ -353,8 +334,8 @@ class Worker(QtCore.QObject):
                     i = f.attributes()[iidx]
                     r = f.attributes()[ridx]
                     comb = ''
-                    if i is not Null:
-                      if r is not Null:
+                    if i is not None:
+                      if r is not None:
                         comb = i + r
                       else:
                         comb = i
@@ -362,11 +343,28 @@ class Worker(QtCore.QObject):
                       comb = r
                     unionlayer.changeAttributeValue(f.id(), combined_field_index, comb)
                 unionlayer.commitChanges()
-
+                #continue
                 # Do the statistics
-                stats = processing.run('qgis:statisticsbycategories', union['OUTPUT'], 'Area', 'Combined', None)
-                
-                statistics.append([radius, stats['OUTPUT']])
+                params={
+                     'INPUT': union['OUTPUT'],
+                     #'INPUT': unionlayer,
+                     'VALUES_FIELD_NAME': 'Area',
+                     'CATEGORIES_FIELD_NAME': 'Combined',
+                     'OUTPUT': 'memory:'
+                }
+                #stats = processing.run('qgis:statisticsbycategories', union['OUTPUT'], 'Area', 'Combined', None)
+                stats = processing.run('qgis:statisticsbycategories', params)
+                statlayer=stats['OUTPUT']
+                provider=statlayer.dataProvider()
+                currstats = {}
+                sumidx = statlayer.fields().lookupField('sum')
+                for f in provider.getFeatures():
+                    sum = f.attributes()[sumidx]
+                    first = f.attributes()[0]
+                    currstats[first] = sum
+                    self.status.emit('stats: ' + str(currstats[first]))
+               
+                statistics.append([radius, currstats])
                 self.calculate_progress()
             
             # Wait for all the tasks to finish
@@ -385,7 +383,7 @@ class Worker(QtCore.QObject):
             if self.abort:
                 self.finished.emit(False, None)
             else:
-                self.status.emit('Delivering the memory layer...')
+                self.status.emit('Delivering the statistics...')
                 #self.finished.emit(True, self.mem_refl)
                 #self.finished.emit(True, None)
                 self.finished.emit(True, statistics)

@@ -143,7 +143,7 @@ class BOSDialog(QDialog, FORM_CLASS):
             for step in range(steps):
                 radii.append(startradius + step * delta)
             self.showInfo(str(radii))
-            radii = [10,20,50]
+            #radii = [10,20,50]
             self.showInfo(str(radii))
             selectedinputonly = self.selectedFeaturesCheckBox.isChecked()
             selectedrefonly = self.selectedRefFeaturesCheckBox.isChecked()
@@ -247,5 +247,19 @@ class BOSDialog(QDialog, FORM_CLASS):
                                             duration=2)
         QgsMessageLog.logMessage('Info: ' + text, self.BOS,
                                  Qgis.Info)
+
+    # Implement the accept method to avoid exiting the dialog when
+    # starting the work
+    def accept(self):
+        """Accept override."""
+        pass
+
+    # Implement the reject method to have the possibility to avoid
+    # exiting the dialog when cancelling
+    def reject(self):
+        """Reject override."""
+        # exit the dialog
+        QDialog.reject(self)
+
 
 
