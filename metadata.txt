@@ -1,6 +1,6 @@
 [general]
 name=BOS
-version=0.1
+version=1.0.0
 qgisMinimumVersion=2.99
 qgisMaximumVersion=3.99
 description=Assess the geometric accuracy of a line dataset by comparing to a line dataset of significantly higher accuracy using the BOS method.
@@ -11,7 +11,7 @@ tracker=https://github.com/havatv/qgisbosplugin/issues
 repository=https://github.com/havatv/qgisbosplugin.git
 homepage=http://arken.nmbu.no/~havatv/gis/qgisplugins/bos
 
-changelog=0.1.0
+changelog=1.0.0
     - Initial version
 tags=lines,line,statistics,vector,accuracy,completeness
 category=Vector

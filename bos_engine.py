@@ -21,30 +21,23 @@
  ***************************************************************************/
 """
 
+import math
 from qgis.core import QgsMessageLog
-#from qgis.core import QGis
-#from qgis.core import QgsWkbTypes
-#from qgis.core import QgsVectorLayer, QgsFeature, QgsSpatialIndex
-#from qgis.core import QgsFeatureRequest, QgsGeometry
 from qgis.core import QgsField
 from qgis.core import QgsProcessingAlgRunnerTask   # ok
 from qgis.core import QgsApplication   # ok
 from processing.tools import dataobjects
 from time import sleep
-#from qgis.core import QgsRectangle, QgsCoordinateTransform
 from qgis.core import QgsProcessingOutputLayerDefinition
 from qgis.core import QgsProcessingUtils
 from qgis.core import QgsProcessingContext  # thread manipulation?
-#QGIS 3
+# QGIS 3
 from qgis.PyQt import QtCore
 from qgis.PyQt.QtCore import QCoreApplication, QVariant
 from qgis.PyQt.QtCore import QThread
 
-#QGIS 2
-#from PyQt4 import QtCore
-#from PyQt4.QtCore import QCoreApplication, QVariant
-
 import processing
+
 
 class Worker(QtCore.QObject):
     '''The worker that does the heavy lifting.
@@ -60,34 +53,24 @@ class Worker(QtCore.QObject):
     finished = QtCore.pyqtSignal(bool, object)
 
     class DummyProgress(object):
-      def __init__(self):
-        pass
+        def __init__(self):
+            pass
 
-      def error(self, er_msg):
-        #print er_msg
-        Worker.status.emit(er_msg)
+        def error(self, er_msg):
+            Worker.status.emit(er_msg)
 
-      def setPercentage(self, percent):
-        #print str(percent)
-        Worker.status.emit(str(percent))
+        def setPercentage(self, percent):
+            Worker.status.emit(str(percent))
 
-      def setText(self, text):
-        #print text
-        Worker.status.emit(text)
+        def setText(self, text):
+            Worker.status.emit(text)
 
-      def setCommand(self, comd):
-        #print comd
-        Worker.status.emit(comd)
-
+        def setCommand(self, comd):
+            Worker.status.emit(comd)
 
     def __init__(self, inputvectorlayer, refvectorlayer,
                  pluginctx,
-                 #outputlayername, refprefix,
-                 #distancefieldname="distance",
-                 #approximateinputgeom=False,
-                 #usereflayerapproximation=False,
-                 #usereflayerindex=True,
-                 radii=[10,20],
+                 radii=[10, 20],
                  selectedinputonly=True,
                  selectedrefonly=True):
         """Initialise.
@@ -118,32 +101,37 @@ class Worker(QtCore.QObject):
         self.percentage = 0
         # Flag set by kill(), checked in the loop
         self.abort = False
-        # Number of features in the input layer - used by
+        # Number of steps in the process - used by
         # calculate_progress (set when needed)
-        self.feature_count = 1
-        # The number of elements that is needed to increment the
+        self.step_count = 1
+        # The number of steps that is needed to increment the
         # progressbar (set when needed)
         self.increment = 0
 
     def run(self):
         # mycontext knyttes til denne tråden
-        mycontext = QgsProcessingContext()
-        #mycontext = processing.context() # finnes ikke!!!
-        #mycontext.pushToThread(QThread.currentThread())
-        self.status.emit('context thread: ' + str(mycontext.thread()) + ' ID: ' + str(mycontext.thread().currentThreadId()))
-        # Create a vector for the statistics
-        statistics = []
-        #self.finished.emit(False, None)
-        #return
+        # mycontext = QgsProcessingContext()   # Not used currently
+        # mycontext = processing.context() # finnes ikke!!!
+        # mycontext.pushToThread(QThread.currentThread())
+        # self.status.emit('context thread: ' + str(mycontext.thread())
+        #                  + ' ID: ' +
+        #                  str(mycontext.thread().currentThreadId()))
+        # Create a dictionary for the area statistics
+        areastatistics = {}
+        polycount = {}
+        completeness = {}
+        miscodings = {}
+        oscillations = {}
         # Testing threads
-        self.status.emit('Worker thread: ' + str(QThread.currentThread()) + ' ID: ' + str(QThread.currentThreadId()))
+        # self.status.emit('Worker thread: ' + str(QThread.currentThread()) +
+        #                  ' ID: ' + str(QThread.currentThreadId()))
         try:
             # Check if the layers look OK
             if self.inpvl is None or self.refvl is None:
                 self.status.emit('Layer is missing!')
                 self.finished.emit(False, None)
                 return
-            # Check if there are features in the layers
+            # Check if there are features in the layers abort if not
             incount = 0
             if self.selectedinonly:
                 incount = self.inpvl.selectedFeatureCount()
@@ -158,27 +146,28 @@ class Worker(QtCore.QObject):
                 self.status.emit('Layer without features!')
                 self.finished.emit(False, None)
                 return
-            # Check the geometry type and prepare the output layer
-            #geometryType = self.inpvl.geometryType()
-            ##geometrytypetext = 'Point'
-            #if geometryType == QGis.Point:
-            #    self.status.emit('Point layer!')
-            #    self.finished.emit(False, None)
-            #    return
-            #elif geometryType == QGis.Line:
-            #    geometrytypetext = 'LineString'
-            #elif geometryType == QGis.Polygon:
-            #    self.status.emit('Polygon layer!')
-            #    self.finished.emit(False, None)
-            #    return
-            # Does the input vector contain multi-geometries?
-            # Try to check the first feature
-            # This is not used for anything yet
-            self.inputmulti = False
+            # Calculate the total length of lines - abort if 0
+            inpgeomlength = 0
+            for f in self.inpvl.getFeatures():
+                inpgeomlength = inpgeomlength + f.geometry().length()
+            if inpgeomlength == 0:
+                self.status.emit('Total line length of input layer is 0!')
+                self.finished.emit(False, None)
+                return
+            refgeomlength = 0
+            for f in self.refvl.getFeatures():
+                refgeomlength = refgeomlength + f.geometry().length()
+            if refgeomlength == 0:
+                self.status.emit('Total line length of reference layer is 0!')
+                self.finished.emit(False, None)
+                return
+
             if self.selectedinonly:
                 feats = self.inpvl.getSelectedFeatures()
             else:
                 feats = self.inpvl.getFeatures()
+            # Check the geometry type (not used!)
+            self.inputmulti = False
             if feats is not None:
                 testfeature = next(feats)
                 feats.rewind()
@@ -187,7 +176,6 @@ class Worker(QtCore.QObject):
                     if testfeature.geometry() is not None:
                         if testfeature.geometry().isMultipart():
                             self.inputmulti = True
-                            #geometrytypetext = 'Multi' + geometrytypetext
                         else:
                             pass
                     else:
@@ -202,192 +190,294 @@ class Worker(QtCore.QObject):
                 self.status.emit('getFeatures returns None for input layer!')
                 self.finished.emit(False, None)
                 return
-            
 
             self.status.emit('Starting BOS')
-            #crstext = "PROJ4:"+str(self.inpvl.crs().toProj4())
-            # If the authid is valid (EPSG), use it.
-            #if "EPSG" in str(self.inpvl.crs().authid()):
-            #    crstext = self.inpvl.crs().authid()
-            #if self.inpvl.crs() is not None:
-            #    geomttext = (geomttext + "?crs=" +
-            #                  crstext)
+
+            # Find the intersection of the bounding boxes of the
+            # input and reference layer
+            # extenttolayer returns a layer with one polygon containing
+            # the bounding box with one attribute - "id" with the value
+            # of 1.
+            inpext = processing.run("native:extenttolayer",
+                                    {'INPUT': self.inpvl,
+                                     'OUTPUT': 'memory:'})
+            refext = processing.run("native:extenttolayer",
+                                    {'INPUT': self.refvl,
+                                     'OUTPUT': 'memory:'})
+            commonext = processing.run("qgis:intersection",
+                                    {'INPUT': inpext['OUTPUT'],
+                                     'OVERLAY': refext['OUTPUT'],
+                                     'OUTPUT': 'memory:'})
+
             # Do the BOS!
-            # Number of features in the input layer - used by
-            # calculate_progress
-            #if self.selectedinonly:
-            #    self.feature_count = self.inpvl.selectedFeatureCount()
-            #else:
-            #    self.feature_count = self.inpvl.featureCount()
-            self.feature_count = len(self.radii)
-            # The number of elements that is needed to increment the
+            self.step_count = len(self.radii)
+            # The number of steps that is needed to increment the
             # progressbar - set early in run()
-            self.increment = self.feature_count // 1000
-            #self.calculate_progress()
+            self.increment = self.step_count // 1000
 
             buffsize = 10.0
 
             def on_complete(ok, results):
                     if ok:
-                        #self.emit('Execution completed')
-                        #self.emit(results)
                         i = 1
                     else:
-                        #self.emit('Execution failed')
                         i = 0
 
-            # layer name, distance, segments, dissolve, 
-            # output /tmp/test -> /tmp/test.shp - use None to return the (memory) layer.
+            # layer name, distance, segments, dissolve,
+            # output /tmp/test -> /tmp/test.shp - use None to return the
+            # (memory) layer.
             for radius in self.radii:
                 self.status.emit('Radius ' + str(radius))
-                
-                #2# inpbuff = processing.runalg("qgis:fixeddistancebuffer",
-                #2#                         self.inpvl, radius, 10, True, None, progress=None)
-                #inpbuff = processing.run("native:buffer", {'INPUT': self.inpvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 1, 'DISSOLVE': True, 'OUTPUT': QgsProcessingOutputLayerDefinition('memory:')},feedback=None)
-                #inpbuff = processing.run("native:buffer", {'INPUT': self.inpvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 1, 'DISSOLVE': True, 'OUTPUT': 'memory:'},feedback=None, context=mycontext)
-                #continue
-                inpbuff = processing.run("native:buffer", {'INPUT': self.inpvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 1, 'DISSOLVE': True, 'OUTPUT': 'memory:'})
-                        # context=None, onFinish=None, feedback=None
-                      #QgsProcessingOutputLayerDefinition('memory:')
+                # Buffer the input and reference layers and add attributes
+                # that identifies them
+                # First, the input buffer:
+                # outputldf = QgsProcessingOutputLayerDefinition('memory:')
+
+                bufferparams = {'INPUT': self.inpvl,
+                                'DISTANCE': radius,
+                                'SEGMENTS': 5,
+                                'END_CAP_STYLE': 0,
+                                'JOIN_STYLE': 0,
+                                'MITER_LIMIT': 1,
+                                'DISSOLVE': True,
+                                # 'OUTPUT': outputldf}
+                                'OUTPUT': 'memory:'}
+                inpbuff = processing.run("native:buffer", bufferparams)
+                #            context=None, feedback=None)
+                #            context=mycontext, onFinish=None, feedback=None)
                 # Drop all attributes?
-                # Add a distinguising attribute
-                #2# inpblayer=processing.getObject(inpbuff['OUTPUT'])
-                #inpblayer=QgsProcessingUtils.mapLayerFromString(inpbuff['OUTPUT'])
-                inpblayer=inpbuff['OUTPUT']
-                provider=inpblayer.dataProvider()
+                # Add a distinguishing attribute
+                # inpblayer=QgsProcessingUtils.mapLayerFromString(inpbuff['OUTPUT'])
+                inpblayer = inpbuff['OUTPUT']
+                provider = inpblayer.dataProvider()
+                # Remove all attributes (done here in case the input
+                # layer is not editable):
+                for f in provider.fields():
+                    provider.deleteAttributes([0])
+                # inpblayer.updateFields()
                 provider.addAttributes([QgsField('InputB', QVariant.String)])
                 inpblayer.updateFields()
-
                 inpblayer.startEditing()
                 new_field_index = inpblayer.fields().lookupField('InputB')
-                
-                #for f in processing.features(inpblayer):
+                # Calculate the total area of the buffer:
+                inptotarea = 0
+                # for f in processing.features(inpblayer):
                 for f in provider.getFeatures():
-                    inpblayer.changeAttributeValue(f.id(), new_field_index, 'I')
+                    inptotarea = inptotarea + f.geometry().area()
+                    inpblayer.changeAttributeValue(f.id(),
+                                                   new_field_index, 'I')
                 inpblayer.commitChanges()
 
-            #myprogress = self.DummyProgress()
-            #def setPercentage(self, percent):
-            #    self.status.emit(str(percent))
-            #myprogress.setPercentage = setPercentage
-            #def setText(self, text):
-            #    self.status.emit(str(text))
-            #myprogress.setText = setText
-            #def error(self, er_msg):
-            #    self.status.emit(str(er_msg))
-            #myprogress.error = error
-            #def setCommand(self, comd):
-            #    self.status.emit(str(comd))
-            #myprogress.setCommand = setCommand
-
-            #myprogress = type("MyProgress", (object,),
-            #  { "setPercentage": lambda percent: self.status.emit(str(percent)),
-            #    "setText": lambda text: self.status.emit(text),
-            #    "error": lambda er_msg: self.status.emit(er_msg),
-            #    "setCommand": lambda comd: self.status.emit(comd)
-            #  })
-            #inpbuff = processing.runalg("qgis:fixeddistancebuffer",
-            #                            self.inpvl, 10, 10, True, None, progress=myprogress)
-                self.status.emit('Input buffer created')
-                #continue
-                #2# refbuff = processing.runalg("qgis:fixeddistancebuffer", self.refvl, radius, 10, True, None, progress=None)
-                #refbuff = processing.run("qgis:fixeddistancebuffer", {'INPUT': self.refvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'DISSOLVE': True, 'OUTPUT': None})
-                refbuff = processing.run("native:buffer", {'INPUT': self.refvl, 'DISTANCE': radius, 'SEGMENTS': 10, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 1, 'DISSOLVE': True, 'OUTPUT': QgsProcessingOutputLayerDefinition('memory:')},feedback=None)
+                # Reuse the parameters from the input layer buffering
+                bufferparams['INPUT'] = self.refvl
+                refbuff = processing.run("native:buffer", bufferparams)
                 # Drop all attributes?
                 # Add a distinguising attribute
-                #refblayer=processing.getObject(refbuff['OUTPUT'])
-                refblayer=refbuff['OUTPUT']
-                provider=refblayer.dataProvider()
+                refblayer = refbuff['OUTPUT']
+                provider = refblayer.dataProvider()
+                # Remove all attributes (done here in case the input
+                # layer is not editable):
+                for f in provider.fields():
+                    provider.deleteAttributes([0])
                 provider.addAttributes([QgsField('RefB', QVariant.String)])
                 refblayer.updateFields()
                 refblayer.startEditing()
                 new_field_index = refblayer.fields().lookupField('RefB')
-                #for f in processing.features(refblayer):
+                # Calculate the total area of the buffer:
+                reftotarea = 0
                 for f in provider.getFeatures():
-                    refblayer.changeAttributeValue(f.id(), new_field_index, 'R')
+                    reftotarea = reftotarea + f.geometry().area()
+                    refblayer.changeAttributeValue(f.id(),
+                                                   new_field_index, 'R')
                 refblayer.commitChanges()
 
-                self.status.emit('Reference buffer created')
-                #continue
-                #2# union = processing.runalg("qgis:union", inpbuff['OUTPUT'], refbuff['OUTPUT'], None, progress=None)
-                #union = processing.runalg("qgis:union", {'INPUT': inpbuff['OUTPUT'], 'OVERLAY': refbuff['OUTPUT']})
-                union = processing.run("qgis:union", {'INPUT': inpbuff['OUTPUT'], 'OVERLAY': refbuff['OUTPUT'], 'OUTPUT': "memory:"})
-                self.status.emit('Union finished')
+                # Calculate completeness and miscodings using line-polygon
+                # overlays and line length measurements
+                # First, completeness:
+                # Line overlay (input buffer + reference lines):
+                intersectoutput = 'memory:'
+                intersectparams = {
+                                   'INPUT': self.refvl,
+                                   'OVERLAY': inpbuff['OUTPUT'],
+                                   'OUTPUT': intersectoutput
+                }
+                intersect = processing.run('qgis:intersection',
+                                           intersectparams)
+                interslayer = intersect['OUTPUT']
+                provider = interslayer.dataProvider()
+                # Calculate the total length of reference lines inside
+                # the input buffer
+                reflinelength = 0
+                for f in provider.getFeatures():
+                    reflinelength = reflinelength + f.geometry().length()
+                # Calculate completeness
+                if refgeomlength > 0:
+                    BOScompleteness = reflinelength / refgeomlength
+                else:
+                    BOScompleteness = 0
+                completeness[radius] = BOScompleteness
 
-#                # Calculate areas:
-#                # Create a category field for statistics
-                unionlayer=union['OUTPUT']
-                #unionlayer=processing.getObject(union['OUTPUT'])
-                provider=unionlayer.dataProvider()
-                provider.addAttributes([QgsField('Area', QVariant.Double)])
+                # Then, miscodings:
+                # The reference buffer is used to remove parts of the
+                # input layer
+                differenceoutput = 'memory:'
+                diffparams = {
+                  'INPUT': self.inpvl,
+                  'OVERLAY': refbuff['OUTPUT'],
+                  'OUTPUT': differenceoutput
+                }
+                difference = processing.run('qgis:difference', diffparams)
+                difflayer = difference['OUTPUT']
+                provider = difflayer.dataProvider()
+                # Calculate the total length of input lines outside the
+                # reference buffer
+                inplinelength = 0
+                for f in provider.getFeatures():
+                    inplinelength = inplinelength + f.geometry().length()
+                # Calculate miscodings
+                if inpgeomlength > 0:
+                    BOSmiscodings = inplinelength / inpgeomlength
+                else:
+                    BOSmiscodings = 0
+                miscodings[radius] = BOSmiscodings
+                unionparameters = {'INPUT': inpbuff['OUTPUT'],
+                              'OVERLAY': refbuff['OUTPUT'],
+                              'OUTPUT': "memory:"}
+                firstunion = processing.run("native:union", unionparameters)
+
+                # Do union with a "background" layer to be able to
+                # identify the polygons that are outside both the
+                # input buffer and ref buffer
+                unionparameters = {'INPUT': firstunion['OUTPUT'],
+                                   'OVERLAY': commonext['OUTPUT'],
+                                   'OUTPUT': "memory:"}
+                union = processing.run("native:union", unionparameters)
+
+                # Do a multipart to single operation
+                multitosingle = processing.run("native:multiparttosingleparts",
+                                               {'INPUT': union['OUTPUT'],
+                                                'OUTPUT': "memory:"})
+
+                # Calculate areas:
+                unionlayer = multitosingle['OUTPUT']
+                provider = unionlayer.dataProvider()
+                # Create a category field for statistics
                 provider.addAttributes([QgsField('Combined', QVariant.String)])
+                # Create an area field
+                provider.addAttributes([QgsField('Area', QVariant.Double)])
                 unionlayer.updateFields()
                 unionlayer.startEditing()
                 area_field_index = unionlayer.fields().lookupField('Area')
-                combined_field_index = unionlayer.fields().lookupField('Combined')
-                #for f in processing.features(unionlayer):
+                comb_field_index = unionlayer.fields().lookupField('Combined')
                 for f in provider.getFeatures():
                     area = f.geometry().area()
-                    unionlayer.changeAttributeValue(f.id(), area_field_index, area)
+                    unionlayer.changeAttributeValue(f.id(), area_field_index,
+                                                    area)
                     iidx = unionlayer.fields().lookupField('InputB')
                     ridx = unionlayer.fields().lookupField('RefB')
                     i = f.attributes()[iidx]
                     r = f.attributes()[ridx]
                     comb = ''
                     if i is not None:
-                      if r is not None:
-                        comb = i + r
-                      else:
-                        comb = i
+                        if r is not None:
+                            comb = i + r
+                        else:
+                            comb = i
                     else:
-                      comb = r
-                    unionlayer.changeAttributeValue(f.id(), combined_field_index, comb)
+                        # comb = r
+                        if r is not None:
+                            comb = r
+                        else:
+                            comb = 'O'
+                    unionlayer.changeAttributeValue(f.id(), comb_field_index,
+                                                    comb)
                 unionlayer.commitChanges()
-                #continue
-                # Do the statistics
-                params={
-                     'INPUT': union['OUTPUT'],
-                     #'INPUT': unionlayer,
+
+                # Do the area statistics to get the area for the following:
+                # I: Inside input buffer, outside reference buffer
+                # IR: Inside input buffer, inside reference buffer
+                # I: Outside input buffer, inside reference buffer
+                # And the number of features for the following
+                # O: Outside input buffer, outside reference buffer
+                params = {
+                     # 'INPUT': union['OUTPUT'],
+                     'INPUT': multitosingle['OUTPUT'],
+                     # 'INPUT': unionlayer,
                      'VALUES_FIELD_NAME': 'Area',
                      'CATEGORIES_FIELD_NAME': 'Combined',
                      'OUTPUT': 'memory:'
                 }
-                #stats = processing.run('qgis:statisticsbycategories', union['OUTPUT'], 'Area', 'Combined', None)
                 stats = processing.run('qgis:statisticsbycategories', params)
-                statlayer=stats['OUTPUT']
-                provider=statlayer.dataProvider()
+                statlayer = stats['OUTPUT']
+                provider = statlayer.dataProvider()
+                # extract from the statistics
                 currstats = {}
+                oscillations[radius] = 0
+                # Get the indexes for the relevant fields
+                # key:
+                combidx = statlayer.fields().lookupField('Combined')
+                # sum of areas:
                 sumidx = statlayer.fields().lookupField('sum')
+                # number of features:
+                countidx = statlayer.fields().lookupField('count')
+                # Got through the results (four rows, for I, IR, R and O)
                 for f in provider.getFeatures():
-                    sum = f.attributes()[sumidx]
-                    first = f.attributes()[0]
-                    currstats[first] = sum
-                    self.status.emit('stats: ' + str(currstats[first]))
-               
-                statistics.append([radius, currstats])
+                    # Area statistics
+                    thesum = f.attributes()[sumidx]
+                    count = f.attributes()[countidx]
+                    first = f.attributes()[combidx]  # I, IR or R
+                    currstats[first] = thesum
+                    # Oscillation ((#outside both)/(length Inp Lines))
+                    if first == "O" and inpgeomlength > 0:
+                        oscillations[radius] = 1000 * count / inpgeomlength
+                areastatistics[radius] = currstats
                 self.calculate_progress()
-            
-            # Wait for all the tasks to finish
-            while QgsApplication.taskManager().countActiveTasks() > 0:
-                sleep(1)
-
-            #self.status.emit('Worker finished')
-        except:
+        except Exception:
             import traceback
             self.error.emit(traceback.format_exc())
             self.finished.emit(False, None)
-            #if self.mem_refl is not None:
-            #    self.mem_refl.rollBack()
         else:
-            #self.mem_refl.commitChanges()
             if self.abort:
                 self.finished.emit(False, None)
             else:
                 self.status.emit('Delivering the statistics...')
-                #self.finished.emit(True, self.mem_refl)
-                #self.finished.emit(True, None)
-                self.finished.emit(True, statistics)
+                # Prepare the result
+                result = []
+                # Add the radii (first row)
+                rec = ['radius']  # First value is an identifier
+                rec.extend(list(areastatistics.keys()))
+                result.append(rec)
+                # Extract and add the ii, io and oo areas (four rows)
+                for thekey in list(areastatistics[
+                                    list(areastatistics.keys())[0]].keys()):
+                    rec = [thekey]  # First value is an identifier
+                    rec.extend([i[thekey] for i in
+                        list(areastatistics.values())])
+                    result.append(rec)
+                # Add completeness (sixth row)
+                rec = ['completeness']  # First value is identifier
+                rec.extend(list(completeness.values()))
+                result.append(rec)
+                # Add miscodings (seventh row)
+                rec = ['miscodings']  # First value is identifier
+                rec.extend(list(miscodings.values()))
+                result.append(rec)
+                # Add average displacement (eighth row)
+                rec = ['average_displacement']
+                for i in list(areastatistics.keys()):
+                    vals = areastatistics[i]
+                    # pi() * radius * area inside q and outside i / area
+                    # inside i buffer
+                    avgdisp = math.pi * i * vals['R'] / (vals['IR'] +
+                                                         vals['I'])
+                    rec.extend([avgdisp])
+                result.append(rec)
+                # Add oscillations (nineth row)
+                rec = ['oscillations']  # First value is identifier
+                rec.extend(list(oscillations.values()))
+                result.append(rec)
 
+                self.finished.emit(True, result)
 
     def calculate_progress(self):
         '''Update progress and emit a signal with the percentage'''
@@ -396,7 +486,7 @@ class Worker(QtCore.QObject):
         if (self.increment == 0 or
                 self.processed % self.increment == 0):
             # Calculate percentage as integer
-            perc_new = (self.processed * 100) / self.feature_count
+            perc_new = (100 * self.processed) / self.step_count
             if perc_new > self.percentage:
                 self.percentage = perc_new
                 self.progress.emit(self.percentage)
@@ -426,9 +516,3 @@ class Worker(QtCore.QObject):
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('BOSEngine', message)
-
-
-
-
-
-
