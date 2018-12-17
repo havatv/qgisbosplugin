@@ -21,27 +21,22 @@
  *                                                                         *
  ***************************************************************************/
 """
-#2# from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-#2# from PyQt4.QtGui import QAction, QIcon
-#2# from PyQt4.QtGui import QMessageBox
 from qgis.PyQt.QtCore import QSettings, QCoreApplication
-#QFileInfo, 
+# QFileInfo
 from qgis.PyQt.QtCore import QTranslator, qVersion
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMessageBox
 
-#2# from qgis.core import QgsMapLayerRegistry, QgsMapLayer
-#2# from qgis.core import QGis
 from qgis.core import QgsProject, QgsMapLayer, QgsWkbTypes
 
 # Plugin imports
 import sys
 import os.path
-sys.path.append(os.path.dirname(__file__))
 # Initialize Qt resources from file resources.py
-import resources
+from .resources import *
 # Import the code for the dialog
 from .bos_dialog import BOSDialog
+# sys.path.append(os.path.dirname(__file__))
 
 
 class BOS:
@@ -73,7 +68,6 @@ class BOS:
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
 
-
         # Declare instance attributes
         self.actions = []
         # Declare instance attributes
@@ -97,7 +91,6 @@ class BOS:
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('BOS', message)
-
 
     def add_action(
         self,
@@ -185,7 +178,6 @@ class BOS:
             callback=self.run,
             parent=self.iface.mainWindow())
 
-
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
@@ -197,12 +189,10 @@ class BOS:
         # remove the toolbar
         del self.toolbar
 
-
     def run(self):
         """Run method that performs all the real work"""
 
         # Populate the input and reference layer combo boxes
-        #2# layers = QgsMapLayerRegistry.instance().mapLayers()  #2#
         layers = QgsProject.instance().mapLayers()
         layerslist = []
         for id in layers.keys():
@@ -212,9 +202,6 @@ class BOS:
                         self.tr('Information'),
                         'Layer ' + layers[id].name() + ' is not valid')
                 if layers[id].geometryType() == QgsWkbTypes.LineGeometry:
-                #if layers[id].wkbType() == QgsWkbTypes.LineGeometry:
-                #if (layers[id].wkbType() == QGis.WKBLineString or
-                #    layers[id].wkbType() == QGis.WKBLineString25D):   #2#
                     layerslist.append((layers[id].name(), id))
         if len(layerslist) == 0 or len(layers) == 0:
             QMessageBox.information(None,
