@@ -1,0 +1,443 @@
+<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
+<qgis version="3.4.5-Madeira" projectname="">
+  <homePath path=""/>
+  <title></title>
+  <autotransaction active="0"/>
+  <evaluateDefaultValues active="0"/>
+  <trust active="0"/>
+  <projectCrs>
+    <spatialrefsys>
+      <proj4>+proj=utm +zone=32 +datum=WGS84 +units=m +no_defs</proj4>
+      <srsid>3116</srsid>
+      <srid>32632</srid>
+      <authid>EPSG:32632</authid>
+      <description>WGS 84 / UTM zone 32N</description>
+      <projectionacronym>utm</projectionacronym>
+      <ellipsoidacronym>WGS84</ellipsoidacronym>
+      <geographicflag>false</geographicflag>
+    </spatialrefsys>
+  </projectCrs>
+  <layer-tree-group>
+    <customproperties/>
+    <layer-tree-layer checked="Qt::Checked" source="./smallref.shp" expanded="1" id="smallref_06b40d5e_9207_4b3d_a1d4_d7cc8d8a3e93" providerKey="ogr" name="smallref">
+      <customproperties/>
+    </layer-tree-layer>
+    <layer-tree-layer checked="Qt::Checked" source="./smallinput.shp" expanded="1" id="smallinput_d2c4e57e_ed60_435e_80e0_82be3ce21a6e" providerKey="ogr" name="smallinput">
+      <customproperties/>
+    </layer-tree-layer>
+    <custom-order enabled="0">
+      <item>smallref_06b40d5e_9207_4b3d_a1d4_d7cc8d8a3e93</item>
+      <item>smallinput_d2c4e57e_ed60_435e_80e0_82be3ce21a6e</item>
+    </custom-order>
+  </layer-tree-group>
+  <snapping-settings type="1" tolerance="12" mode="2" enabled="0" unit="1" intersection-snapping="0">
+    <individual-layer-settings>
+      <layer-setting type="1" tolerance="12" id="smallref_06b40d5e_9207_4b3d_a1d4_d7cc8d8a3e93" enabled="0" units="1"/>
+      <layer-setting type="1" tolerance="12" id="smallinput_d2c4e57e_ed60_435e_80e0_82be3ce21a6e" enabled="0" units="1"/>
+    </individual-layer-settings>
+  </snapping-settings>
+  <relations/>
+  <mapcanvas name="theMapCanvas" annotationsVisible="1">
+    <units>meters</units>
+    <extent>
+      <xmin>595842.56273717363364995</xmin>
+      <ymin>6612068.33377365209162235</ymin>
+      <xmax>597077.12822536402381957</xmax>
+      <ymax>6614878.41086010076105595</ymax>
+    </extent>
+    <rotation>0</rotation>
+    <destinationsrs>
+      <spatialrefsys>
+        <proj4>+proj=utm +zone=32 +datum=WGS84 +units=m +no_defs</proj4>
+        <srsid>3116</srsid>
+        <srid>32632</srid>
+        <authid>EPSG:32632</authid>
+        <description>WGS 84 / UTM zone 32N</description>
+        <projectionacronym>utm</projectionacronym>
+        <ellipsoidacronym>WGS84</ellipsoidacronym>
+        <geographicflag>false</geographicflag>
+      </spatialrefsys>
+    </destinationsrs>
+    <rendermaptile>0</rendermaptile>
+  </mapcanvas>
+  <projectModels/>
+  <legend updateDrawingOrder="true">
+    <legendlayer checked="Qt::Checked" open="true" showFeatureCount="0" drawingOrder="-1" name="smallref">
+      <filegroup open="true" hidden="false">
+        <legendlayerfile visible="1" layerid="smallref_06b40d5e_9207_4b3d_a1d4_d7cc8d8a3e93" isInOverview="0"/>
+      </filegroup>
+    </legendlayer>
+    <legendlayer checked="Qt::Checked" open="true" showFeatureCount="0" drawingOrder="-1" name="smallinput">
+      <filegroup open="true" hidden="false">
+        <legendlayerfile visible="1" layerid="smallinput_d2c4e57e_ed60_435e_80e0_82be3ce21a6e" isInOverview="0"/>
+      </filegroup>
+    </legendlayer>
+  </legend>
+  <mapViewDocks/>
+  <mapViewDocks3D/>
+  <projectlayers>
+    <maplayer refreshOnNotifyMessage="" type="vector" styleCategories="AllStyleCategories" hasScaleBasedVisibilityFlag="0" minScale="1e+8" autoRefreshTime="0" labelsEnabled="0" maxScale="0" autoRefreshEnabled="0" simplifyAlgorithm="0" readOnly="0" refreshOnNotifyEnabled="0" simplifyDrawingHints="1" simplifyLocal="1" simplifyDrawingTol="1" geometry="Line" simplifyMaxScale="1">
+      <extent>
+        <xmin>595920.10090254922397435</xmin>
+        <ymin>6612904.15183560363948345</ymin>
+        <xmax>596999.38349765539169312</xmax>
+        <ymax>6614027.70488368067890406</ymax>
+      </extent>
+      <id>smallinput_d2c4e57e_ed60_435e_80e0_82be3ce21a6e</id>
+      <datasource>./smallinput.shp</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>smallinput</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=32 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3116</srsid>
+          <srid>32632</srid>
+          <authid>EPSG:32632</authid>
+          <description>WGS 84 / UTM zone 32N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <links/>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+      </resourceMetadata>
+      <provider encoding="UTF-8">ogr</provider>
+      <vectorjoins/>
+      <layerDependencies/>
+      <dataDependencies/>
+      <legend type="default-vector"/>
+      <expressionfields/>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <auxiliaryLayer/>
+      <flags>
+        <Identifiable>1</Identifiable>
+        <Removable>1</Removable>
+        <Searchable>1</Searchable>
+      </flags>
+      <renderer-v2 type="singleSymbol" symbollevels="0" enableorderby="0" forceraster="0">
+        <symbols>
+          <symbol clip_to_extent="1" type="line" alpha="1" force_rhr="0" name="0">
+            <layer class="SimpleLine" locked="0" pass="0" enabled="1">
+              <prop v="square" k="capstyle"/>
+              <prop v="5;2" k="customdash"/>
+              <prop v="3x:0,0,0,0,0,0" k="customdash_map_unit_scale"/>
+              <prop v="MM" k="customdash_unit"/>
+              <prop v="0" k="draw_inside_polygon"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="196,60,57,255" k="line_color"/>
+              <prop v="solid" k="line_style"/>
+              <prop v="0.26" k="line_width"/>
+              <prop v="MM" k="line_width_unit"/>
+              <prop v="0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="0" k="ring_filter"/>
+              <prop v="0" k="use_custom_dash"/>
+              <prop v="3x:0,0,0,0,0,0" k="width_map_unit_scale"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" value="" name="name"/>
+                  <Option name="properties"/>
+                  <Option type="QString" value="collection" name="type"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+        </symbols>
+        <rotation/>
+        <sizescale/>
+      </renderer-v2>
+      <customproperties/>
+      <blendMode>0</blendMode>
+      <featureBlendMode>0</featureBlendMode>
+      <layerOpacity>1</layerOpacity>
+      <geometryOptions removeDuplicateNodes="0" geometryPrecision="0">
+        <activeChecks/>
+        <checkConfiguration/>
+      </geometryOptions>
+      <fieldConfiguration>
+        <field name="FID">
+          <editWidget type="">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+      </fieldConfiguration>
+      <aliases>
+        <alias field="FID" name="" index="0"/>
+      </aliases>
+      <excludeAttributesWMS/>
+      <excludeAttributesWFS/>
+      <defaults>
+        <default applyOnUpdate="0" expression="" field="FID"/>
+      </defaults>
+      <constraints>
+        <constraint exp_strength="0" unique_strength="0" field="FID" notnull_strength="0" constraints="0"/>
+      </constraints>
+      <constraintExpressions>
+        <constraint desc="" exp="" field="FID"/>
+      </constraintExpressions>
+      <expressionfields/>
+      <attributeactions/>
+      <attributetableconfig sortExpression="" sortOrder="0" actionWidgetStyle="dropDown">
+        <columns/>
+      </attributetableconfig>
+      <conditionalstyles>
+        <rowstyles/>
+        <fieldstyles/>
+      </conditionalstyles>
+      <editform tolerant="1"></editform>
+      <editforminit/>
+      <editforminitcodesource>0</editforminitcodesource>
+      <editforminitfilepath></editforminitfilepath>
+      <editforminitcode><![CDATA[]]></editforminitcode>
+      <featformsuppress>0</featformsuppress>
+      <editorlayout>generatedlayout</editorlayout>
+      <editable/>
+      <labelOnTop/>
+      <widgets/>
+      <previewExpression></previewExpression>
+      <mapTip></mapTip>
+    </maplayer>
+    <maplayer refreshOnNotifyMessage="" type="vector" styleCategories="AllStyleCategories" hasScaleBasedVisibilityFlag="0" minScale="1e+8" autoRefreshTime="0" labelsEnabled="0" maxScale="0" autoRefreshEnabled="0" simplifyAlgorithm="0" readOnly="0" refreshOnNotifyEnabled="0" simplifyDrawingHints="1" simplifyLocal="1" simplifyDrawingTol="1" geometry="Line" simplifyMaxScale="1">
+      <extent>
+        <xmin>595938.59999999997671694</xmin>
+        <ymin>6612938.06000000052154064</ymin>
+        <xmax>596781.76000000000931323</xmax>
+        <ymax>6614043.06000000052154064</ymax>
+      </extent>
+      <id>smallref_06b40d5e_9207_4b3d_a1d4_d7cc8d8a3e93</id>
+      <datasource>./smallref.shp</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>smallref</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=32 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3116</srsid>
+          <srid>32632</srid>
+          <authid>EPSG:32632</authid>
+          <description>WGS 84 / UTM zone 32N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <links/>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+      </resourceMetadata>
+      <provider encoding="UTF-8">ogr</provider>
+      <vectorjoins/>
+      <layerDependencies/>
+      <dataDependencies/>
+      <legend type="default-vector"/>
+      <expressionfields/>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <auxiliaryLayer/>
+      <flags>
+        <Identifiable>1</Identifiable>
+        <Removable>1</Removable>
+        <Searchable>1</Searchable>
+      </flags>
+      <renderer-v2 type="singleSymbol" symbollevels="0" enableorderby="0" forceraster="0">
+        <symbols>
+          <symbol clip_to_extent="1" type="line" alpha="1" force_rhr="0" name="0">
+            <layer class="SimpleLine" locked="0" pass="0" enabled="1">
+              <prop v="square" k="capstyle"/>
+              <prop v="5;2" k="customdash"/>
+              <prop v="3x:0,0,0,0,0,0" k="customdash_map_unit_scale"/>
+              <prop v="MM" k="customdash_unit"/>
+              <prop v="0" k="draw_inside_polygon"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="190,178,151,255" k="line_color"/>
+              <prop v="solid" k="line_style"/>
+              <prop v="0.26" k="line_width"/>
+              <prop v="MM" k="line_width_unit"/>
+              <prop v="0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="0" k="ring_filter"/>
+              <prop v="0" k="use_custom_dash"/>
+              <prop v="3x:0,0,0,0,0,0" k="width_map_unit_scale"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" value="" name="name"/>
+                  <Option name="properties"/>
+                  <Option type="QString" value="collection" name="type"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+        </symbols>
+        <rotation/>
+        <sizescale/>
+      </renderer-v2>
+      <customproperties/>
+      <blendMode>0</blendMode>
+      <featureBlendMode>0</featureBlendMode>
+      <layerOpacity>1</layerOpacity>
+      <geometryOptions removeDuplicateNodes="0" geometryPrecision="0">
+        <activeChecks/>
+        <checkConfiguration/>
+      </geometryOptions>
+      <fieldConfiguration>
+        <field name="FID">
+          <editWidget type="">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+      </fieldConfiguration>
+      <aliases>
+        <alias field="FID" name="" index="0"/>
+      </aliases>
+      <excludeAttributesWMS/>
+      <excludeAttributesWFS/>
+      <defaults>
+        <default applyOnUpdate="0" expression="" field="FID"/>
+      </defaults>
+      <constraints>
+        <constraint exp_strength="0" unique_strength="0" field="FID" notnull_strength="0" constraints="0"/>
+      </constraints>
+      <constraintExpressions>
+        <constraint desc="" exp="" field="FID"/>
+      </constraintExpressions>
+      <expressionfields/>
+      <attributeactions>
+        <defaultAction value="{00000000-0000-0000-0000-000000000000}" key="Canvas"/>
+      </attributeactions>
+      <attributetableconfig sortExpression="" sortOrder="0" actionWidgetStyle="dropDown">
+        <columns/>
+      </attributetableconfig>
+      <conditionalstyles>
+        <rowstyles/>
+        <fieldstyles/>
+      </conditionalstyles>
+      <editform tolerant="1"></editform>
+      <editforminit/>
+      <editforminitcodesource>0</editforminitcodesource>
+      <editforminitfilepath></editforminitfilepath>
+      <editforminitcode><![CDATA[]]></editforminitcode>
+      <featformsuppress>0</featformsuppress>
+      <editorlayout>generatedlayout</editorlayout>
+      <editable/>
+      <labelOnTop/>
+      <widgets/>
+      <previewExpression></previewExpression>
+      <mapTip></mapTip>
+    </maplayer>
+  </projectlayers>
+  <layerorder>
+    <layer id="smallref_06b40d5e_9207_4b3d_a1d4_d7cc8d8a3e93"/>
+    <layer id="smallinput_d2c4e57e_ed60_435e_80e0_82be3ce21a6e"/>
+  </layerorder>
+  <properties>
+    <Paths>
+      <Absolute type="bool">false</Absolute>
+    </Paths>
+    <Measure>
+      <Ellipsoid type="QString">WGS84</Ellipsoid>
+    </Measure>
+    <PAL>
+      <CandidatesPoint type="int">16</CandidatesPoint>
+      <TextFormat type="int">0</TextFormat>
+      <SearchMethod type="int">0</SearchMethod>
+      <ShowingPartialsLabels type="bool">true</ShowingPartialsLabels>
+      <ShowingAllLabels type="bool">false</ShowingAllLabels>
+      <CandidatesPolygon type="int">30</CandidatesPolygon>
+      <ShowingCandidates type="bool">false</ShowingCandidates>
+      <CandidatesLine type="int">50</CandidatesLine>
+      <DrawRectOnly type="bool">false</DrawRectOnly>
+    </PAL>
+    <Measurement>
+      <AreaUnits type="QString"></AreaUnits>
+      <DistanceUnits type="QString"></DistanceUnits>
+    </Measurement>
+    <SpatialRefSys>
+      <ProjectionsEnabled type="int">1</ProjectionsEnabled>
+    </SpatialRefSys>
+    <Legend>
+      <filterByMap type="bool">false</filterByMap>
+    </Legend>
+    <Gui>
+      <SelectionColorBluePart type="int">0</SelectionColorBluePart>
+      <SelectionColorGreenPart type="int">255</SelectionColorGreenPart>
+      <SelectionColorRedPart type="int">255</SelectionColorRedPart>
+      <SelectionColorAlphaPart type="int">255</SelectionColorAlphaPart>
+      <CanvasColorRedPart type="int">255</CanvasColorRedPart>
+      <CanvasColorBluePart type="int">255</CanvasColorBluePart>
+      <CanvasColorGreenPart type="int">255</CanvasColorGreenPart>
+    </Gui>
+    <PositionPrecision>
+      <DecimalPlaces type="int">2</DecimalPlaces>
+      <Automatic type="bool">true</Automatic>
+    </PositionPrecision>
+  </properties>
+  <visibility-presets/>
+  <transformContext/>
+  <projectMetadata>
+    <identifier></identifier>
+    <parentidentifier></parentidentifier>
+    <language></language>
+    <type></type>
+    <title></title>
+    <abstract></abstract>
+    <links/>
+    <author>havatv</author>
+    <creation>2019-03-06T13:17:50</creation>
+  </projectMetadata>
+  <Annotations/>
+  <Layouts/>
+</qgis>
