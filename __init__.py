@@ -5,8 +5,8 @@
                                  A QGIS plugin
  Implements the BOS method for assessing the accuracy of geographical lines
                              -------------------
-        begin                : 2017-10-19
-        copyright            : (C) 2017 by Håvard Tveite
+        begin                : 2018-12-18
+        copyright            : (C) 2018 by Håvard Tveite
         email                : havard.tveite@nmbu.no
         git sha              : $Format:%H$
  ***************************************************************************/
@@ -25,7 +25,7 @@
 
 # noinspection PyPep8Naming
 def classFactory(iface):  # pylint: disable=invalid-name
-    """Load BOS class from file BOS.
+    """Load BOS class from file bos.py.
 
     :param iface: A QGIS interface instance.
     :type iface: QgsInterface

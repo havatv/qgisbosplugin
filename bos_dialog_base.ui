@@ -169,7 +169,7 @@ p, li { white-space: pre-wrap; }
              <double>999999999.990000009536743</double>
             </property>
             <property name="value">
-             <double>1.000000000000000</double>
+             <double>200.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -205,7 +205,7 @@ p, li { white-space: pre-wrap; }
              <double>999999999.990000009536743</double>
             </property>
             <property name="value">
-             <double>10.000000000000000</double>
+             <double>2000.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -240,6 +240,16 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QCheckBox" name="logCheckBox">
+            <property name="toolTip">
+             <string>Distribute the steps logarithmically instead of using equal interval</string>
+            </property>
+            <property name="text">
+             <string>Logarithmic</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
        </layout>
@@ -264,6 +274,19 @@ p, li { white-space: pre-wrap; }
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
+        <widget class="QProgressBar" name="progressBar">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="value">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="horizontalSpacer_6">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -277,7 +300,21 @@ p, li { white-space: pre-wrap; }
         </spacer>
        </item>
        <item>
-        <widget class="QProgressBar" name="progressBar"/>
+        <widget class="QLabel" name="algProgressLabel">
+         <property name="text">
+          <string>Algs:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QProgressBar" name="algProgressBar">
+         <property name="minimumSize">
+          <size>
+           <width>60</width>
+           <height>0</height>
+          </size>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QDialogButtonBox" name="button_box">
@@ -415,7 +452,7 @@ p, li { white-space: pre-wrap; }
            <double>100000.000000000000000</double>
           </property>
           <property name="value">
-           <double>100.000000000000000</double>
+           <double>150.000000000000000</double>
           </property>
          </widget>
         </item>

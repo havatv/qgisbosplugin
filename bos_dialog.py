@@ -5,9 +5,9 @@
                                  A QGIS plugin
  Implements the BOS method for assessing the accuracy of geographical lines
                              -------------------
-        begin                : 2017-10-19
+        begin                : 2019-03-12
         git sha              : $Format:%H$
-        copyright            : (C) 2017 by Håvard Tveite
+        copyright            : (C) 2019 by Håvard Tveite
         email                : havard.tveite@nmbu.no
  ***************************************************************************/
 
@@ -27,11 +27,10 @@ import os
 import csv
 import math
 
+import matplotlib as mpl
 from matplotlib.figure import Figure
 from matplotlib import ticker
 # from matplotlib import axes
-# from matplotlib.backends.backend_qt4agg import (FigureCanvasQTAgg
-#                                                 as FigureCanvas
 from matplotlib.backends.backend_qt5agg import (FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
 from qgis.PyQt import uic
@@ -40,11 +39,13 @@ from qgis.PyQt.QtCore import QCoreApplication, QObject, QThread
 
 from qgis.PyQt.QtCore import QPointF, QLineF, QRectF, QPoint, QSettings
 from qgis.PyQt.QtCore import QSizeF, QSize, QRect
+#from qgis.PyQt.QtCore import QCoreApplication, QUrl
+from qgis.PyQt.QtCore import QUrl
+
 from qgis.PyQt.QtWidgets import (QGraphicsLineItem, QGraphicsEllipseItem,
                                  QGraphicsTextItem)
 from qgis.PyQt.QtGui import QFont
 # from qgis.PyQt import Qwt5  # Does not seem to be available
-
 
 # from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QDialog, QDialogButtonBox
@@ -57,6 +58,8 @@ from qgis.PyQt.QtGui import QBrush, QPen, QColor
 from qgis.PyQt.QtGui import QPainter
 from qgis.PyQt.QtPrintSupport import QPrinter
 from qgis.PyQt.QtSvg import QSvgGenerator
+from qgis.PyQt.QtGui import QDesktopServices
+
 # from qgis.PyQt.QtGui import QApplication, QImage, QPixmap
 
 
@@ -86,6 +89,7 @@ class BOSDialog(QDialog, FORM_CLASS):
     def __init__(self, iface, parent=None):
         """Constructor."""
         self.iface = iface
+        self.plugin_dir = dirname(__file__)
         super(BOSDialog, self).__init__(parent)
         # Set up the user interface from Designer.
         # After setupUI you can access any designer object by doing
@@ -105,12 +109,20 @@ class BOSDialog(QDialog, FORM_CLASS):
         self.OSCILLATIONS = self.tr('Oscillations')
         self.DISPLACEMENT = self.tr('Displacement')
         self.AVERAGEDISPLACEMENT = self.tr('Average displacement')
+        self.COMBINED = self.tr('Combined')
         self.results = None
         self.plott = None
         self.figure = None
         self.plotsizex = 0
         self.plotsizey = 0
 
+        # Variables for the X and Q line layers
+        self.Xlayer = None
+        self.Qlayer = None
+
+        # Variables for the selected checkboxes
+        self.selectedinputonly = False
+        self.selectedrefonly = False
         okButton = self.button_box.button(QDialogButtonBox.Ok)
         okButton.setText(self.OK)
         cancelButton = self.button_box.button(QDialogButtonBox.Cancel)
@@ -124,16 +136,26 @@ class BOSDialog(QDialog, FORM_CLASS):
                                  self.AVERAGEDISPLACEMENT)
         self.graphtypeCB.addItem(self.OSCILLATIONS, self.OSCILLATIONS)
         self.graphtypeCB.addItem(self.COMPLETENESS, self.COMPLETENESS)
+        self.graphtypeCB.addItem(self.COMBINED, self.COMBINED)
         self.savepdfPB.clicked.connect(self.saveAsPDF)
         self.savesvgPB.clicked.connect(self.saveAsSVG)
         self.savecsvPB.clicked.connect(self.saveAsCSV)
         self.graphtypeCB.currentIndexChanged.connect(self.selectGraphType)
-
+        self.savepdfPB.setEnabled(False)
+        self.savesvgPB.setEnabled(False)
+        self.savecsvPB.setEnabled(False)
         # Connect signals
         okButton.clicked.connect(self.startWorker)
+        helpButton.clicked.connect(self.help)
         self.ringcolour = QColor(153, 153, 255)
 
     def startWorker(self):
+        if Qgis.QGIS_VERSION_INT < 30405:
+           self.showError('The plugin requires QGIS 3.4.5 or later '
+                          'to run. Your QGIS version is ' +
+                          Qgis.QGIS_VERSION +
+                          ' - sorry about that!')
+           return
         # plugincontext = QgsProcessingContext().copyThreadSafeSettings()
         plugincontext = QgsProcessingContext()
         plugincontext.setProject(QgsProject.instance())
@@ -142,45 +164,55 @@ class BOSDialog(QDialog, FORM_CLASS):
         try:
             layerindex = self.inputLayer.currentIndex()
             layerId = self.inputLayer.itemData(layerindex)
-            inputlayer = QgsProject.instance().mapLayer(layerId)
-            if inputlayer is None:
+            self.Xlayer = QgsProject.instance().mapLayer(layerId)
+            if self.Xlayer is None:
                 self.showError(self.tr('No input layer defined'))
                 return
             refindex = self.referenceLayer.currentIndex()
             reflayerId = self.referenceLayer.itemData(refindex)
-            reflayer = QgsProject.instance().mapLayer(reflayerId)
+            self.Qlayer = QgsProject.instance().mapLayer(reflayerId)
             # not meaningful for the layers to be identical
             # should the provider be checked for equality?
             if layerId == reflayerId:
                 self.showInfo('The reference layer must be different'
                               ' from the input layer!')
                 return
-            if reflayer is None:
+            if self.Qlayer is None:
                 self.showError(self.tr('No reference layer defined'))
                 return
-            if reflayer is not None and reflayer.sourceCrs().isGeographic():
+            if (self.Qlayer is not None and
+                    self.Qlayer.sourceCrs().isGeographic()):
                 self.showWarning('Geographic CRS used for the reference'
                                  ' layer - computations will be in decimal'
                                  ' degrees!')
             steps = self.stepsSB.value()
             startradius = self.startRadiusSB.value()
             endradius = self.endRadiusSB.value()
-            delta = (endradius - startradius) / (steps - 1)
             radii = []
-            for step in range(steps):
-                radii.append(startradius + step * delta)
+            self.logarithmic = self.logCheckBox.isChecked()
+            if self.logarithmic:
+                startl = math.log(startradius)
+                endl = math.log(endradius)
+                deltal = (endl - startl) / (steps - 1)
+                for step in range(steps):
+                    radii.append(math.exp(startl + step * deltal))
+            else:
+                delta = (endradius - startradius) / (steps - 1)
+                for step in range(steps):
+                    radii.append(startradius + step * delta)
+
             self.showInfo("Radii: " + str(radii))
-            selectedinputonly = self.selectedFeaturesCheckBox.isChecked()
-            selectedrefonly = self.selectedRefFeaturesCheckBox.isChecked()
+            self.selectedinputonly = self.selectedFeaturesCheckBox.isChecked()
+            self.selectedrefonly = self.selectedRefFeaturesCheckBox.isChecked()
             plugincontext = dataobjects.createContext()
             # create a new worker instance
-            worker = Worker(inputlayer, reflayer, plugincontext, radii,
-                            selectedinputonly, selectedrefonly)
+            worker = Worker(self.Xlayer, self.Qlayer, plugincontext, radii,
+                            self.selectedinputonly, self.selectedrefonly)
             # # configure the QgsMessageBar
             # msgBar = self.iface.messageBar().createMessage(
             #                                    self.tr('Starting'), '')
-            self.aprogressBar = QProgressBar()
-            self.aprogressBar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            #self.aprogressBar = QProgressBar()
+            #self.aprogressBar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             acancelButton = QPushButton()
             acancelButton.setText(self.CANCEL)
             acancelButton.clicked.connect(self.killWorker)
@@ -200,7 +232,9 @@ class BOSDialog(QDialog, FORM_CLASS):
             worker.error.connect(self.workerError)
             worker.status.connect(self.workerInfo)
             worker.progress.connect(self.progressBar.setValue)
-            worker.progress.connect(self.aprogressBar.setValue)
+            worker.algprogress.connect(self.algProgressBar.setValue)
+            worker.phase.connect(self.setPhase)
+            #worker.progress.connect(self.aprogressBar.setValue)
             thread.started.connect(worker.run)
             thread.start()
             self.thread = thread
@@ -208,6 +242,9 @@ class BOSDialog(QDialog, FORM_CLASS):
             self.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
             self.button_box.button(QDialogButtonBox.Close).setEnabled(False)
             self.button_box.button(QDialogButtonBox.Cancel).setEnabled(True)
+            self.savepdfPB.setEnabled(False)
+            self.savesvgPB.setEnabled(False)
+            self.savecsvPB.setEnabled(False)
         except Exception:
             import traceback
             self.showError(traceback.format_exc())
@@ -218,6 +255,9 @@ class BOSDialog(QDialog, FORM_CLASS):
     def workerFinished(self, ok, ret):
         """Handles the output from the worker and cleans up after the
            worker has finished."""
+        self.button_box.button(QDialogButtonBox.Ok).setEnabled(True)
+        self.button_box.button(QDialogButtonBox.Close).setEnabled(True)
+        self.button_box.button(QDialogButtonBox.Cancel).setEnabled(False)
         # clean up the worker and thread
         self.worker.deleteLater()
         self.thread.quit()
@@ -225,7 +265,10 @@ class BOSDialog(QDialog, FORM_CLASS):
         self.thread.deleteLater()
         # # remove widget from message bar (pop)
         # self.iface.messageBar().popWidget(self.messageBar)
-        self.showInfo("showinfo - ret: " + str(ret))
+        self.progressBar.setValue(0.0)
+        self.algProgressBar.setValue(0.0)
+        self.algProgressLabel.setText("")
+        # self.showInfo("showinfo - ret: " + str(ret))
         if ok and ret is not None:
             # report the result
             self.results = ret
@@ -239,10 +282,12 @@ class BOSDialog(QDialog, FORM_CLASS):
                 self.showError(self.tr('Aborted') + '!')
             else:
                 self.showError(self.tr('No sensible statistics') + '!')
-        self.progressBar.setValue(0.0)
-        self.button_box.button(QDialogButtonBox.Ok).setEnabled(True)
-        self.button_box.button(QDialogButtonBox.Close).setEnabled(True)
-        self.button_box.button(QDialogButtonBox.Cancel).setEnabled(False)
+            return
+        self.savepdfPB.setEnabled(True)
+        self.savesvgPB.setEnabled(True)
+        self.savecsvPB.setEnabled(True)
+
+
         # Do the plotting
         # self.showInfo("Try to plot - " + str(ok) + " ret: " + str (ret))
         if ok and ret is not None:
@@ -251,8 +296,11 @@ class BOSDialog(QDialog, FORM_CLASS):
 
     # Benytter matplotlib til grafene.
     def showPlotsmpl(self):
+        if mpl.__version__ < '2.0':
+            self.showWarning(self.tr('Matplotlib version 2 or higher is required for plotting!'))
+            return
         defaultmpldpi = 100
-        self.showInfo("Showplots matplotlib")
+        # self.showInfo("Showplots matplotlib")
         radii = self.results[0][1:]
         # self.showInfo("radii: " + str(radii))
         compl = self.results[5][1:]
@@ -339,9 +387,9 @@ class BOSDialog(QDialog, FORM_CLASS):
         self.figure = Figure(figsize=(self.plotsizex, self.plotsizey))
         static_canvas = FigureCanvas(self.figure)
         # Create a group of subplot containing only one plot area
-        static_ax = static_canvas.figure.subplots()
         axisscale = 1.02
         if graphtype == self.COMPLETENESS:
+            static_ax = static_canvas.figure.subplots()  # Crash: 'Figure' object has no attribute 'subplots' (requires matplotlib version 2.?)
             static_ax.set_title('BOS - Completeness / Miscodings')
             static_ax.set_xlabel('Buffer size')
             static_ax.set_xlim([0, max(radii) * axisscale])
@@ -350,40 +398,60 @@ class BOSDialog(QDialog, FORM_CLASS):
             # Add (0, 0)
             static_ax.plot([0] + radii,
                            [0] + [percent * 100 for percent in compl],
-                            "o-", color='black', fillstyle='none',
+                            ".-", color='black', fillstyle='none',
                             label="Completeness of X relative to Q",
-                            linewidth=0.5)
+                            linewidth=0.2)
             # Add (0, 100)
             static_ax.plot([0] + radii,
                            [100] + [percent * 100 for percent in misc],
                            "+-", color='black', fillstyle='none',
                            label="Miscodings in X relative to Q",
-                           linewidth=0.5)
+                           linewidth=0.2)
             # vals = static_ax.get_yticks()
             static_ax.grid(which='both')
             fmt = '%.0f%%'
             yticks = ticker.FormatStrFormatter(fmt)
             static_ax.yaxis.set_major_formatter(yticks)
+            static_ax.legend()
         elif graphtype == self.DISPLACEMENT:
+            # Calculate the total length of the lines in the X data set
+            inplength = 0
+            if self.selectedinputonly:
+                for f in self.Xlayer.getSelectedFeatures():
+                    inplength = inplength + f.geometry().length()
+            else:
+                for f in self.Xlayer.getFeatures():
+                    inplength = inplength + f.geometry().length()
+            # Calculate the total length of the lines in the Q data set
+            reflength = 0
+            if self.selectedrefonly:
+                for f in self.Qlayer.getSelectedFeatures():
+                    reflength = reflength + f.geometry().length()
+            else:
+                for f in self.Qlayer.getFeatures():
+                    reflength = reflength + f.geometry().length()
+            static_ax = static_canvas.figure.subplots()
             static_ax.set_title('BOS - Displacement information')
             static_ax.set_xlabel('Buffer size')
             static_ax.set_xlim([0, max(radii) * axisscale])
             static_ax.set_ylim([0, 100])
             static_ax.set_yticks([i * 10 for i in range(11)])
-            # Add (0, 0)
+            # Add data points for 0
             static_ax.plot([0] + radii,
                            [0] + [percent * 100 for percent in normiiirsizes],
-                           "o-", color='black', fillstyle='none',
+                           ".-", color='black', fillstyle='none',
                            label="Inside X and inside Q",
                            linewidth=0.5)
-            static_ax.plot(radii,
+            static_ax.plot([0] + radii,
+                           [100 * inplength / (inplength + reflength)] +
                            [percent * 100 for percent in normiiorsizes],
                            "+-", color='black', fillstyle='none',
                            label="Inside X and Outside Q",
                            linewidth=0.5)
-            static_ax.plot(radii,
+            static_ax.plot([0] + radii,
+                           [100 * reflength / (inplength + reflength)] +
                            [percent * 100 for percent in normoiirsizes],
-                           "D-", color='black', fillstyle='none',
+                           "s-", color='black', fillstyle='none',
                            label="Outside X and Inside Q",
                            linewidth=0.5)
             # vals = static_ax.get_yticks()
@@ -391,13 +459,16 @@ class BOSDialog(QDialog, FORM_CLASS):
             fmt = '%.0f%%'
             yticks = ticker.FormatStrFormatter(fmt)
             static_ax.yaxis.set_major_formatter(yticks)
+            static_ax.legend()
         elif graphtype == self.AVERAGEDISPLACEMENT:
+            static_ax = static_canvas.figure.subplots()
             static_ax.set_title('BOS - Average displacement information')
             static_ax.set_xlabel('Buffer size')
             static_ax.set_xlim([0, max(radii) * axisscale])
             static_ax.set_ylim([0, max(avgdisp) * axisscale])
+            static_ax.set_ylabel('Map units')
             # Add (0, 0)
-            static_ax.plot([0] + radii, [0] + avgdisp, "o-",
+            static_ax.plot([0] + radii, [0] + avgdisp, ".-",
                            color='black', fillstyle='none',
                            label="Average displacement of Q relative to X",
                            linewidth=0.5)
@@ -406,31 +477,150 @@ class BOSDialog(QDialog, FORM_CLASS):
             # fmt = '%.0f%%'
             # yticks = ticker.FormatStrFormatter(fmt)
             # static_ax.yaxis.set_major_formatter(yticks)
+            static_ax.legend()
         elif graphtype == self.OSCILLATIONS:
+            static_ax = static_canvas.figure.subplots()
             static_ax.set_title('BOS - Oscillations')
             static_ax.set_xlabel('Buffer size')
             static_ax.set_xlim([0, max(radii) * axisscale])
             static_ax.set_ylim([0, max(oscillations) * axisscale])
-            static_ax.plot(radii, oscillations, "o-", color='black',
+            static_ax.set_ylabel('#polygons/1k map units')
+            static_ax.plot(radii, oscillations, ".-", color='black',
                            fillstyle='none',
-                           label="Number of polygons/lenght unit in the"
-                                 "combined data set",
+                           label="Number of polygons / 1k length units"
+                                 "  in the combined data set",
                            linewidth=0.5)
             static_ax.grid(which='both')
+            static_ax.legend()
+        elif graphtype == self.COMBINED:
+            # Calculate the total length of the lines in the X data set
+            inplength = 0
+            if self.selectedinputonly:
+                for f in self.Xlayer.getSelectedFeatures():
+                    inplength = inplength + f.geometry().length()
+            else:
+                for f in self.Xlayer.getFeatures():
+                    inplength = inplength + f.geometry().length()
+            # Calculate the total length of the lines in the Q data set
+            reflength = 0
+            if self.selectedrefonly:
+                for f in self.Qlayer.getSelectedFeatures():
+                    reflength = reflength + f.geometry().length()
+            else:
+                for f in self.Qlayer.getFeatures():
+                    reflength = reflength + f.geometry().length()
+            tsize = 12
+            labsize = 10
+            legsize = 8
+            ticsize = 8
+            static_ax = static_canvas.figure.subplots(2, 2)
+            # static_ax[1][0].rcParams.update({'font.size': 4})
+            static_ax[1][0].set_title('BOS - Oscillation', fontsize=tsize)
+            static_ax[1][0].set_xlabel('Buffer size', fontsize=labsize)
+            static_ax[1][0].set_ylabel('#polygons/1k u', fontsize=labsize)
+            static_ax[1][0].set_xlim([0, max(radii) * axisscale])
+            static_ax[1][0].set_ylim([0, max(oscillations) * axisscale])
+            static_ax[1][0].xaxis.set_tick_params(labelsize=ticsize)
+            static_ax[1][0].yaxis.set_tick_params(labelsize=ticsize)
+            static_ax[1][0].plot(radii, oscillations, ".-", color='black',
+                           fillstyle='none',
+                           label="#Polygons",
+                           linewidth=0.5,
+                           markersize=5)
+            static_ax[1][0].grid(which='both')
+            static_ax[1][0].legend(fontsize=legsize)
 
+            static_ax[0][1].set_title('BOS - Avg displ', fontsize=tsize)
+            static_ax[0][1].set_xlabel('Buffer size', fontsize=labsize)
+            static_ax[0][1].set_ylabel('Map units', fontsize=labsize)
+            static_ax[0][1].set_xlim([0, max(radii) * axisscale])
+            static_ax[0][1].set_ylim([0, max(avgdisp) * axisscale])
+            static_ax[0][1].xaxis.set_tick_params(labelsize=ticsize)
+            static_ax[0][1].yaxis.set_tick_params(labelsize=ticsize)
+            # Add a data point for 0
+            static_ax[0][1].plot([0] + radii, [0] + avgdisp, ".-",
+                           color='black', fillstyle='none',
+                           label="Avg displ",
+                           linewidth=0.5,
+                           markersize=5)
+            static_ax[0][1].grid(which='both')
+            static_ax[0][1].legend(fontsize=legsize)
+
+            static_ax[0][0].set_title('BOS - Displacement', fontsize=tsize)
+            static_ax[0][0].set_xlabel('Buffer size', fontsize=tsize)
+            static_ax[0][0].set_xlim([0, max(radii) * axisscale])
+            static_ax[0][0].set_ylim([0, 100])
+            # static_ax[0][0].set_yticks([i * 10 for i in range(11)])
+            static_ax[0][0].xaxis.set_tick_params(labelsize=ticsize)
+            static_ax[0][0].yaxis.set_tick_params(labelsize=ticsize)
+            # Add data points for 0
+            static_ax[0][0].plot([0] + radii,
+                           [0] + [percent * 100 for percent in normiiirsizes],
+                           ".-", color='black', fillstyle='none',
+                           label="IX & IQ",
+                           linewidth=0.5,
+                           markersize=5)
+            static_ax[0][0].plot([0] + radii,
+                           [100 * inplength / (inplength + reflength)] +
+                           [percent * 100 for percent in normiiorsizes],
+                           "+-", color='black', fillstyle='none',
+                           label="IX & OQ",
+                           linewidth=0.5,
+                           markersize=5)
+            static_ax[0][0].plot([0] + radii,
+                           [100 * reflength / (inplength + reflength)] +
+                           [percent * 100 for percent in normoiirsizes],
+                           "s-", color='black', fillstyle='none',
+                           label="OX & IQ",
+                           linewidth=0.5,
+                           markersize=5)
+            # vals = static_ax[0][0].get_yticks()
+            static_ax[0][0].grid(which='both')
+            fmt = '%.0f%%'
+            yticks = ticker.FormatStrFormatter(fmt)
+            static_ax[0][0].yaxis.set_major_formatter(yticks)
+            static_ax[0][0].legend(fontsize=legsize)
+
+            static_ax[1][1].set_title('BOS - Compl/Misc', fontsize=tsize)
+            static_ax[1][1].set_xlabel('Buffer size', fontsize=tsize)
+            static_ax[1][1].set_xlim([0, max(radii) * axisscale])
+            static_ax[1][1].set_ylim([0, 100])
+            # static_ax[1][1].set_yticks([i * 10 for i in range(11)])
+            static_ax[1][1].xaxis.set_tick_params(labelsize=ticsize)
+            static_ax[1][1].yaxis.set_tick_params(labelsize=ticsize)
+            # Add data points for 0
+            static_ax[1][1].plot([0] + radii,
+                           [0] + [percent * 100 for percent in compl],
+                            ".-", color='black', fillstyle='none',
+                            label="Completeness",
+                            linewidth=0.5,
+                            markersize=5)
+            static_ax[1][1].plot([0] + radii,
+                           [100] + [percent * 100 for percent in misc],
+                           "+-", color='black', fillstyle='none',
+                           label="Miscodings",
+                           linewidth=0.5,
+                           markersize=5)
+            # vals = static_ax[1][1].get_yticks()
+            static_ax[1][1].grid(which='both')
+            fmt = '%.0f%%'
+            yticks = ticker.FormatStrFormatter(fmt)
+            static_ax[1][1].yaxis.set_major_formatter(yticks)
+            static_ax[1][1].legend(fontsize=legsize)
         else:
-            self.showWarning("unsopported graphtype: " + str(graphtype))
+            self.showWarning("unsupported graphtype: " + str(graphtype))
             return
         # static_ax.set_yticklabels(['{}{}'.format(int(x),'%') for x in vals])
-        static_ax.legend()
         self.figure.tight_layout(pad=0.5)
         self.plott = static_canvas
         self.BOSscene.addWidget(static_canvas)
         return
     # end showPlotsmpl
 
+    # Select the type of graph (when the user makes a choice)
     def selectGraphType(self, index):
-        self.showPlotsmpl()
+        if self.results is not None:
+            self.showPlotsmpl()
     # end selectGraphType
 
     # Save to PDF
@@ -439,6 +629,7 @@ class BOSDialog(QDialog, FORM_CLASS):
         key = '/UI/lastShapefileDir'
         outDir = settings.value(key)
         filter = 'PDF (*.pdf)'
+        # Two elements are returned (not documented in the pyqt5 docs
         savename, _filter = QFileDialog.getSaveFileName(self, "Save File",
                                                         outDir, filter)
         # Check if empty (cancelled)
@@ -454,11 +645,23 @@ class BOSDialog(QDialog, FORM_CLASS):
         self.figure.set_size_inches(self.widthmmDSB.value() / 25.4,
                                     self.heightmmDSB.value() / 25.4)
         self.figure.tight_layout(pad=0.5)
+        graphtype = self.graphtypeCB.itemData(self.graphtypeCB.currentIndex())
+        plottitle = ''
+        if graphtype == self.COMPLETENESS:
+            plottitle = 'BOS - Completeness / Miscodings'
+        elif graphtype == self.DISPLACEMENT:
+            plottitle = 'BOS - Displacement information'
+        elif graphtype == self.AVERAGEDISPLACEMENT:
+            plottitle = 'BOS - Average displacement information'
+        elif graphtype == self.OSCILLATIONS:
+            plottitle = 'BOS - Oscillations'
+        elif graphtype == self.COMBINED:
+            plottitle = 'BOS - Combined plot'
         try:
             self.figure.savefig(savename, dpi=300, format='pdf',
                                 metadata={'Creator': 'BOS QGIS Plugin',
-                                'Author': 'Håvard Tveite',
-                                'Title': 'Completeness / Miscodings (BOS)'})
+                                'Author': 'H Tveite, NMBU',
+                                'Title': plottitle})
         except Exception:
             import traceback
             self.showError(traceback.format_exc())
@@ -471,8 +674,9 @@ class BOSDialog(QDialog, FORM_CLASS):
         key = '/UI/lastShapefileDir'
         outDir = settings.value(key)
         filter = 'SVG (*.svg)'
+        # Two elements are returned (not documented in the pyqt5 docs
         savename, _filter = QFileDialog.getSaveFileName(self, "Save to SVG",
-                                                   outDir, filter)
+                                                        outDir, filter)
         # Check if empty (cancelled)
         # if savename.isEmpty():
         if savename == '':
@@ -481,16 +685,27 @@ class BOSDialog(QDialog, FORM_CLASS):
         if savename:
             outDir = os.path.dirname(savename)
             settings.setValue(key, outDir)
-
         currsize = self.figure.get_size_inches()
         self.figure.set_size_inches(self.widthmmDSB.value() / 25.4,
                                     self.heightmmDSB.value() / 25.4)
         self.figure.tight_layout(pad=0.5)
+        graphtype = self.graphtypeCB.itemData(self.graphtypeCB.currentIndex())
+        plottitle = ''
+        if graphtype == self.COMPLETENESS:
+            plottitle = 'BOS - Completeness / Miscodings'
+        elif graphtype == self.DISPLACEMENT:
+            plottitle = 'BOS - Displacement information'
+        elif graphtype == self.AVERAGEDISPLACEMENT:
+            plottitle = 'BOS - Average displacement information'
+        elif graphtype == self.OSCILLATIONS:
+            plottitle = 'BOS - Oscillations'
+        elif graphtype == self.COMBINED:
+            plottitle = 'BOS - Combined plot'
         try:
             self.figure.savefig(savename, dpi=300, format='svg',
                                 metadata={'Creator': 'BOS QGIS Plugin',
-                                'Author': 'Håvard Tveite',
-                                'Title': 'Completeness / Miscodings (BOS)'})
+                                'Author': 'H Tveite, NMBU',
+                                'Title': plottitle})
         except Exception:
             import traceback
             self.showError(traceback.format_exc())
@@ -512,6 +727,8 @@ class BOSDialog(QDialog, FORM_CLASS):
         if savename == "":
             return
         savename = unicode(savename)
+        if savename[-4:] != ".csv":
+            savename = savename + ".csv"
         if savename:
             outDir = os.path.dirname(savename)
             settings.setValue(key, outDir)
@@ -531,6 +748,15 @@ class BOSDialog(QDialog, FORM_CLASS):
         except IOError as e:
                     self.showInfo("Trouble writing the CSV file: " + str(e))
     # End of saveascsv
+
+    def setPhase(self, phase):
+        #self.showInfo("Phase changed to: " + str(phase))
+        self.algProgressLabel.setText(phase + ":")
+
+    def help(self):
+        QDesktopServices.openUrl(QUrl.fromLocalFile(
+                         self.plugin_dir + "/help/html/index.html"))
+        # showPluginHelp(None, "help/html/index")
 
     def killWorker(self):
         """Kill the worker thread."""
@@ -573,8 +799,9 @@ class BOSDialog(QDialog, FORM_CLASS):
 
     # Overriding
     def resizeEvent(self, event):
-        if self.results is not None:
-            # self.showPlots()
+        if self.results is None:
+            return
+        else:
             self.showPlotsmpl()
 
     # Implement the accept method to avoid exiting the dialog when

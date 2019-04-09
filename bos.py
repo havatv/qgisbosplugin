@@ -4,11 +4,11 @@
  BOS
                                  A QGIS plugin
  Implements the BOS method for assessing the accuracy of geographical line
- data sets
+ datasets
                               -------------------
-        begin                : 2017-10-19
+        begin                : 2019-03-12
         git sha              : $Format:%H$
-        copyright            : (C) 2017 by Håvard Tveite
+        copyright            : (C) 2019 by Håvard Tveite
         email                : havard.tveite@nmbu.no
  ***************************************************************************/
 
@@ -22,7 +22,6 @@
  ***************************************************************************/
 """
 from qgis.PyQt.QtCore import QSettings, QCoreApplication
-# QFileInfo
 from qgis.PyQt.QtCore import QTranslator, qVersion
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMessageBox
@@ -30,7 +29,7 @@ from qgis.PyQt.QtWidgets import QAction, QMessageBox
 from qgis.core import QgsProject, QgsMapLayer, QgsWkbTypes
 
 # Plugin imports
-import sys
+# import sys
 import os.path
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -50,21 +49,19 @@ class BOS:
             application at run time.
         :type iface: QgsInterface
         """
-        # Save reference to the QGIS interface
+        # Save a reference to the QGIS interface
         self.iface = iface
-        # initialize plugin directory
+        # get the plugin directory
         self.plugin_dir = os.path.dirname(__file__)
-        # initialize locale
+        # get the user's locale
         locale = QSettings().value('locale/userLocale')[0:2]
         locale_path = os.path.join(
             self.plugin_dir,
             'i18n',
             'BOS_{}.qm'.format(locale))
-
         if os.path.exists(locale_path):
             self.translator = QTranslator()
             self.translator.load(locale_path)
-
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
 
@@ -73,9 +70,6 @@ class BOS:
         # Declare instance attributes
         self.BOS = self.tr(u'BOS')
         self.BOSAMP = self.tr(u'&BOS')
-        # TODO: We are going to let the user set this up in a future iteration
-        self.toolbar = self.iface.addToolBar(self.BOS)
-        self.toolbar.setObjectName(self.BOS)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -131,7 +125,7 @@ class BOS:
             hovers over the action.
         :type status_tip: str
 
-        :param parent: Parent widget for the new action. Defaults None.
+        :param parent: Parent widget for the new action. Default is None.
         :type parent: QWidget
 
         :param whats_this: Optional text to show in the status bar when the
@@ -144,37 +138,33 @@ class BOS:
 
         # Create the dialog (after translation) and keep reference
         self.dlg = BOSDialog(self.iface)
-
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
         action.triggered.connect(callback)
         action.setEnabled(enabled_flag)
-
         if status_tip is not None:
             action.setStatusTip(status_tip)
-
         if whats_this is not None:
             action.setWhatsThis(whats_this)
-
         if add_to_toolbar:
-            self.toolbar.addAction(action)
-
+            if hasattr(self.iface, 'addVectorToolBarIcon'):
+                self.iface.addVectorToolBarIcon(action)
+            else:
+                self.iface.addToolBarIcon(action)
         if add_to_menu and hasattr(self.iface, 'addPluginToVectorMenu'):
             self.iface.addPluginToVectorMenu(
                 self.BOSAMP,
                 action)
-
         self.actions.append(action)
-
         return action
+    # end add_action
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-
         icon_path = ':/plugins/BOS/bos.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'The BOS line accuracy assessment method'),
+            text=self.tr(u'BOS - Line accuracy assessment'),
             callback=self.run,
             parent=self.iface.mainWindow())
 
@@ -185,13 +175,13 @@ class BOS:
                 self.iface.removePluginVectorMenu(
                     self.BOSAMP,
                     action)
-            self.iface.removeToolBarIcon(action)
-        # remove the toolbar
-        del self.toolbar
+            if hasattr(self.iface, 'removeVectorToolBarIcon'):
+                self.iface.removeVectorToolBarIcon(action)
+            else:
+                self.iface.removeToolBarIcon(action)
 
     def run(self):
         """Run method that performs all the real work"""
-
         # Populate the input and reference layer combo boxes
         layers = QgsProject.instance().mapLayers()
         layerslist = []
@@ -218,7 +208,6 @@ class BOS:
         for layerdescription in layerslist:
             self.dlg.referenceLayer.addItem(layerdescription[0],
                                         layerdescription[1])
-
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
