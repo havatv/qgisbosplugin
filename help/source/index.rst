@@ -201,7 +201,7 @@ Citation
 --------
 Would you like to cite / reference this plugin?
 
-Tveite, H. (2019). The QGIS BOS Plugin.
+Tveite, H. (2020). The QGIS BOS Plugin.
 <URL: http://plugins.qgis.org/plugins/BOS/>.
 
 Bibtex:
@@ -212,7 +212,7 @@ Bibtex:
     author = {Håvard Tveite},
     title = {The {QGIS} {BOS} Plugin},
     howpublished = {\url{http://plugins.qgis.org/plugins/BOS/}},
-    year = {2019}
+    year = {2020}
   }
 
 
