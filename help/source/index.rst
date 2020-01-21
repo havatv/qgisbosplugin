@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to BOS's documentation!
-============================================
+The BOS Plugin - Implementing the BOS Method for Line Quality Assessment
+========================================================================
 
 Contents:
 
@@ -212,7 +212,7 @@ Bibtex:
     author = {Håvard Tveite},
     title = {The {QGIS} {BOS} Plugin},
     howpublished = {\url{http://plugins.qgis.org/plugins/BOS/}},
-    year = {2018}
+    year = {2019}
   }
 
 
