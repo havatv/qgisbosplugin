@@ -201,7 +201,7 @@ Citation
 --------
 Would you like to cite / reference this plugin?
 
-Tveite, H. (2018). The QGIS BOS Plugin.
+Tveite, H. (2019). The QGIS BOS Plugin.
 <URL: http://plugins.qgis.org/plugins/BOS/>.
 
 Bibtex:
