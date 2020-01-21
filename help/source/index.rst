@@ -216,8 +216,7 @@ Bibtex:
   }
 
 
-References
-----------
+.. rubric:: References
 
 .. [Tveite1999] Tveite, H. and Langaas S., 1999.
    An accuracy assessment method for geographical line data sets

@@ -15,6 +15,6 @@ changelog=1.0.0
 tags=lines,line,statistics,vector,accuracy,completeness,miscodings,displacement,buffer
 category=Vector
 icon=bos.png
-experimental=True
+experimental=False
 deprecated=False
 
