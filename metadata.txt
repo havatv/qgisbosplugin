@@ -8,7 +8,7 @@ email=havard.tveite@nmbu.no
 about=The BOS Plugin compares the geometries of two line layers (the input and the reference layer) by buffering and overlay for several buffer sizes, collecting statistics and plotting the results for a visual assessment of the geometric accuracy (and completeness) of the line data set according to the BOS method (reference: Tveite, H. and Langaas S., 1999. An accuracy assessment method for geographical line data sets based on buffering. International Journal of Geographical Information Science, 13, pp. 27-47. URL: https://doi.org/10.1080/136588199241445).
 tracker=https://github.com/havatv/qgisbosplugin/issues
 repository=https://github.com/havatv/qgisbosplugin.git
-homepage=http://arken.nmbu.no/~havatv/gis/qgisplugins/bos
+homepage=http://arken.nmbu.no/~havatv/gis/qgisplugins/BOS
 
 changelog=1.0.0
     - Initial version
