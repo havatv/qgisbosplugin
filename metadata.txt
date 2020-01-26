@@ -14,7 +14,7 @@ changelog=1.0.1
     -- Documentation update
     -- Code cleaning (PEP 8)
     1.0.0
-    - Initial version
+    -- Initial version
 tags=lines,line,statistics,vector,accuracy,completeness,miscodings,displacement,buffer
 category=Vector
 icon=bos.png
