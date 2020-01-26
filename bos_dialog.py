@@ -39,7 +39,7 @@ from qgis.PyQt.QtCore import QCoreApplication, QObject, QThread
 
 from qgis.PyQt.QtCore import QPointF, QLineF, QRectF, QPoint, QSettings
 from qgis.PyQt.QtCore import QSizeF, QSize, QRect
-#from qgis.PyQt.QtCore import QCoreApplication, QUrl
+# from qgis.PyQt.QtCore import QCoreApplication, QUrl
 from qgis.PyQt.QtCore import QUrl
 
 from qgis.PyQt.QtWidgets import (QGraphicsLineItem, QGraphicsEllipseItem,
@@ -151,11 +151,11 @@ class BOSDialog(QDialog, FORM_CLASS):
 
     def startWorker(self):
         if Qgis.QGIS_VERSION_INT < 30405:
-           self.showError('The plugin requires QGIS 3.4.5 or later '
-                          'to run. Your QGIS version is ' +
-                          Qgis.QGIS_VERSION +
-                          ' - sorry about that!')
-           return
+            self.showError('The plugin requires QGIS 3.4.5 or later '
+                           'to run. Your QGIS version is ' +
+                           Qgis.QGIS_VERSION +
+                           ' - sorry about that!')
+            return
         # plugincontext = QgsProcessingContext().copyThreadSafeSettings()
         plugincontext = QgsProcessingContext()
         plugincontext.setProject(QgsProject.instance())
@@ -211,8 +211,8 @@ class BOSDialog(QDialog, FORM_CLASS):
             # # configure the QgsMessageBar
             # msgBar = self.iface.messageBar().createMessage(
             #                                    self.tr('Starting'), '')
-            #self.aprogressBar = QProgressBar()
-            #self.aprogressBar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            # self.aprogressBar = QProgressBar()
+            # self.aprogressBar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             acancelButton = QPushButton()
             acancelButton.setText(self.CANCEL)
             acancelButton.clicked.connect(self.killWorker)
@@ -234,7 +234,7 @@ class BOSDialog(QDialog, FORM_CLASS):
             worker.progress.connect(self.progressBar.setValue)
             worker.algprogress.connect(self.algProgressBar.setValue)
             worker.phase.connect(self.setPhase)
-            #worker.progress.connect(self.aprogressBar.setValue)
+            # worker.progress.connect(self.aprogressBar.setValue)
             thread.started.connect(worker.run)
             thread.start()
             self.thread = thread
@@ -287,7 +287,6 @@ class BOSDialog(QDialog, FORM_CLASS):
         self.savesvgPB.setEnabled(True)
         self.savecsvPB.setEnabled(True)
 
-
         # Do the plotting
         # self.showInfo("Try to plot - " + str(ok) + " ret: " + str (ret))
         if ok and ret is not None:
@@ -297,7 +296,8 @@ class BOSDialog(QDialog, FORM_CLASS):
     # Benytter matplotlib til grafene.
     def showPlotsmpl(self):
         if mpl.__version__ < '2.0':
-            self.showWarning(self.tr('Matplotlib version 2 or higher is required for plotting!'))
+            self.showWarning(self.tr('Matplotlib version 2 or higher is'
+                             'required for plotting!'))
             return
         defaultmpldpi = 100
         # self.showInfo("Showplots matplotlib")
@@ -389,7 +389,9 @@ class BOSDialog(QDialog, FORM_CLASS):
         # Create a group of subplot containing only one plot area
         axisscale = 1.02
         if graphtype == self.COMPLETENESS:
-            static_ax = static_canvas.figure.subplots()  # Crash: 'Figure' object has no attribute 'subplots' (requires matplotlib version 2.?)
+            static_ax = static_canvas.figure.subplots()
+            # Crash: 'Figure' object has no attribute 'subplots'
+            # (requires matplotlib version 2.?)
             static_ax.set_title('BOS - Completeness / Miscodings')
             static_ax.set_xlabel('Buffer size')
             static_ax.set_xlim([0, max(radii) * axisscale])
@@ -750,7 +752,7 @@ class BOSDialog(QDialog, FORM_CLASS):
     # End of saveascsv
 
     def setPhase(self, phase):
-        #self.showInfo("Phase changed to: " + str(phase))
+        # self.showInfo("Phase changed to: " + str(phase))
         self.algProgressLabel.setText(phase + ":")
 
     def help(self):

@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to BOS's documentation!
-============================================
+The BOS Plugin - Implementing the BOS Method for Line Quality Assessment
+========================================================================
 
 Contents:
 
@@ -80,7 +80,6 @@ The following graphs are offered:
   |displacement|
 
   .. |displacement| image:: illustrations/displacement.png
-   :height: 200
    :align: middle
 
 - *Average displacement* - shows the average displacement as a function of
@@ -90,7 +89,6 @@ The following graphs are offered:
   |avgdisp|
 
   .. |avgdisp| image:: illustrations/averagedisplacement.png
-   :height: 200
    :align: middle
 
 - *Oscillations* - can indicate bias and spatial accuracy.
@@ -100,7 +98,6 @@ The following graphs are offered:
   |oscillations|
 
   .. |oscillations| image:: illustrations/oscillations.png
-   :height: 200
    :align: middle
 
 
@@ -110,7 +107,6 @@ The following graphs are offered:
   |completeness|
 
   .. |completeness| image:: illustrations/completeness.png
-   :height: 200
    :align: middle
 
 In addition a combination of all the graphs is offered with the
@@ -119,40 +115,105 @@ In addition a combination of all the graphs is offered with the
   |combined|
 
   .. |combined| image:: illustrations/combined.png
-   :height: 200
    :align: middle
 
 
 Options
 -------
 
-- The number of steps (buffer sizes)
+The behaviour of the BOS plugin is configured in the GUI:
 
-- The start buffer radius
+|bosgui|
 
-- The end buffer radius.
+.. |bosgui| image:: illustrations/bos_gui.png
+ :align: middle
 
-If you would like to have 20 buffers with a spacing of 100, you
-could specify 100 for the start radius, 2000 for the end radius
-and 20 for the number of steps.
+For input layers, you can choose if *Selected features only*
+are to be considered.
 
-It can be useful to include a small radius, for instance a start
-radius of 1, an end radius of 2000.
-The steps will then not be at "even" numbers, but the first data
+In the *Options* area you will find the following:
+
+- The *Number of steps* (buffer sizes)
+
+- The *Start radius* (for the buffers)
+
+- The *End radius* (for the buffers)
+
+- It is possible to choose a *Logarithmic* distribution
+  of the buffer sizes. The default is to distribute them
+  evenly between the *Start radius* and *End radius*.
+  
+
+If you would like to have 10 buffers with a spacing of 100, you
+could specify 100 for the *Start radius*, 1000 for the *End radius*
+and 10 for the *Number of steps*, resulting in the following buffer
+sizes::
+
+  100, 200, 300, 400, 500, 600, 700, 800, 900, 1000
+
+With *Start radius* 1, *End radius* 1000, 10 buffers and
+*Logaritmic* the list will be::
+
+  1, 2.15, 4.6, 10, 21.5, 46.4, 100, 215.4, 464.2, 1000
+
+Depending on your datasets, it may be useful to start with a
+small radius, for instance a *Start radius* of 1 with an *End
+radius* of 1000.
+The steps will then not be at "nice" numbers, but the first data
 point will be close to the start of the x (buffer size) axis.
+The *Logaritmic* option is useful in combination with a small
+start radius, in order to get more details in what is normally
+the most "interesting" range.
+
+The plots in the figure below show the effect of the
+*Logarithmic* option (*Number of steps*: `10`; *Start radius*:
+`10` for linear and `1` for *Logarithmic*; *End radius*: `100`).
+
++-------------------+-------------------+
+| Linear            | Logarithmic       |
++===================+===================+
+| |linear_combined| | |log_combined|    |
++-------------------+-------------------+
+
+.. |linear_combined| image:: illustrations/bos_combined_linear.png
+ :height: 200
+ :align: middle
+
+.. |log_combined| image:: illustrations/bos_combined_logaritmic.png
+ :height: 200
+ :align: middle
+
+Output options
+..............
+
+When the algorithm has run, you can choose the type of graph
+(see descriptions above).
+Choices are:
+
+* *Displacement*
+* *Average displacement*
+* *Oscillations*
+* *Completeness*
+* *Combined* - all the four graphs listed above are combined
+  into one plot
 
 Export
 ------
 
-Exporting graphs as PDF and SVG
+Export is supported for plots and data.
+
+Exporting plots as PDF and SVG
 ...............................
+Export of plots is supported with the buttons
+*Save plot as SVG* and *Save plot as PDF*.
+
 Options:
 
-The width and height of the output graphics can be specified.
+- *Width (mm)* - The width of the output graphics in mm.
+  Default: 150.0 mm
 
-- Width in mm
-
-- Height in mm
+- *Height (mm)* - The height of the output graphics in mm.
+  Default: 100.0 mm
 
 Exporting the data as CSV
 .........................
@@ -186,22 +247,32 @@ Implementation
 --------------
 The heavy work is performed in the background using a worker thread.
 Most of the computation is performed in the worker thread using QGIS
-processing algorithms (buffer, union, clip, difference, multipart to
-singleparts and statistics by categories).
+processing algorithms (*Buffer*, *Union*, *Clip*, *Difference*,
+*Multipart to singleparts* and *Statistics by categories*).
 
-Progress is only reported when a complete step has been finished
-(progress of the individual processing algorithms is not forwarded
-to the user interface).
+The main (left) progress bar is updated each time a main step (buffer
+size) has been completed, and the second (right) progress bar reports
+the progress of the individual processing algorithms (there are
+eight substeps for each buffer size). The current algorithm/substep
+is indicated in the area between the progress bars: "prep",
+"inpb (1/8)", "refb (2/8)", "clip (3/8)", "diff (4/8)",
+"union1 (5/8)", "union2 (6/8)", "tosingle (7/8)" and "stat (8/8)".
 
 Versions
 --------
-The current version is 1.0.0
+The current version is 1.0.1.
+
+- 1.0.1
+    - Eliminated the superfluous "BOS" submenu under the Vector menu
+    - Documentation update
+    - Code cleaning (PEP 8)
+- 1.0: First official version.
 
 Citation
 --------
 Would you like to cite / reference this plugin?
 
-Tveite, H. (2018). The QGIS BOS Plugin.
+Tveite, H. (2020). The QGIS BOS Plugin.
 <URL: http://plugins.qgis.org/plugins/BOS/>.
 
 Bibtex:
@@ -212,12 +283,11 @@ Bibtex:
     author = {Håvard Tveite},
     title = {The {QGIS} {BOS} Plugin},
     howpublished = {\url{http://plugins.qgis.org/plugins/BOS/}},
-    year = {2018}
+    year = {2020}
   }
 
 
-References
-----------
+.. rubric:: References
 
 .. [Tveite1999] Tveite, H. and Langaas S., 1999.
    An accuracy assessment method for geographical line data sets

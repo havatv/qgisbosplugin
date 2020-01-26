@@ -124,7 +124,7 @@ class Worker(QtCore.QObject):
         # oscillations = {}
         fb = QgsProcessingFeedback()
         fb.progressChanged.connect(self.alg_progress_changed)
-        #processing.run(...., feedback=fb)
+        # processing.run(...., feedback=fb)
         # Testing threads
         try:
             # Check if the layers look OK
@@ -210,22 +210,25 @@ class Worker(QtCore.QObject):
                                      'OUTPUT': 'memory:'},
                                     context=self.plugincontext,
                                     is_child_algorithm=True)
-            inpextlayer = self.plugincontext.temporaryLayerStore().mapLayer(inpext['OUTPUT'])
+            tlStore = self.plugincontext.temporaryLayerStore()
+            inpextlayer = tlStore.mapLayer(inpext['OUTPUT'])
             refext = processing.run("native:extenttolayer",
                                     {'INPUT': self.Qvl,
                                      'OUTPUT': 'memory:'},
                                     context=self.plugincontext,
                                     is_child_algorithm=True)
-            refextlayer = self.plugincontext.temporaryLayerStore().mapLayer(refext['OUTPUT'])
+            tlStore = self.plugincontext.temporaryLayerStore()
+            refextlayer = tlStore.mapLayer(refext['OUTPUT'])
             commonext = processing.run("qgis:intersection",
                                     {'INPUT': inpextlayer,
                                      'OVERLAY': refextlayer,
                                      'OUTPUT': 'memory:'},
                                     context=self.plugincontext,
                                     is_child_algorithm=True)
-                                    # {'INPUT': inpext['OUTPUT'],
-                                    # 'OVERLAY': refext['OUTPUT'],
-            commonextlayer = self.plugincontext.temporaryLayerStore().mapLayer(commonext['OUTPUT'])
+            #                       {'INPUT': inpext['OUTPUT'],
+            #                        'OVERLAY': refext['OUTPUT'],
+            tlStore = self.plugincontext.temporaryLayerStore()
+            commonextlayer = tlStore.mapLayer(commonext['OUTPUT'])
             commonextbuf = processing.run("native:buffer",
                                     {'INPUT': commonextlayer,
                                      'DISTANCE': 1.1 *
@@ -233,8 +236,9 @@ class Worker(QtCore.QObject):
                                      'OUTPUT': 'memory:'},
                                     context=self.plugincontext,
                                     is_child_algorithm=True)
-                                    # {'INPUT': commonext['OUTPUT'],
-            commonextbuflayer = self.plugincontext.temporaryLayerStore().mapLayer(commonextbuf['OUTPUT'])
+            #                       {'INPUT': commonext['OUTPUT'],
+            tlStore = self.plugincontext.temporaryLayerStore()
+            commonextbuflayer = tlStore.mapLayer(commonextbuf['OUTPUT'])
 
             # Do the BOS!
             self.step_count = len(self.radii)
@@ -263,13 +267,14 @@ class Worker(QtCore.QObject):
                                          context=self.plugincontext,
                                          feedback=fb,
                                          is_child_algorithm=True)
-                inpblayer = self.plugincontext.temporaryLayerStore().mapLayer(inpbuff['OUTPUT'])
+                tlStore = self.plugincontext.temporaryLayerStore()
+                inpblayer = tlStore.mapLayer(inpbuff['OUTPUT'])
 
                 #            context=None, feedback=None)
                 #            context=mycontext, onFinish=None, feedback=None)
                 # inpblayer=QgsProcessingUtils.mapLayerFromString(inpbuff['OUTPUT'])
-                #inpblayer = inpbuff['OUTPUT']
-                #inpblayer  = inpbufflayer
+                # inpblayer = inpbuff['OUTPUT']
+                # inpblayer  = inpbufflayer
                 provider = inpblayer.dataProvider()
                 # Remove all attributes (done here in case the input
                 # layer is not editable):
@@ -298,8 +303,9 @@ class Worker(QtCore.QObject):
                                          context=self.plugincontext,
                                          feedback=fb,
                                          is_child_algorithm=True)
-                refblayer = self.plugincontext.temporaryLayerStore().mapLayer(refbuff['OUTPUT'])
-                #refblayer = refbuff['OUTPUT']
+                tlStore = self.plugincontext.temporaryLayerStore()
+                refblayer = tlStore.mapLayer(refbuff['OUTPUT'])
+                # refblayer = refbuff['OUTPUT']
                 provider = refblayer.dataProvider()
                 # Remove all attributes (done here in case the input
                 # layer is not editable):
@@ -320,7 +326,6 @@ class Worker(QtCore.QObject):
                 refblayer.commitChanges()
                 # self.status.emit('Buffers finished')
 
-
                 # Calculate completeness and miscodings using line-polygon
                 # overlays and line length measurements
                 # First, completeness:
@@ -331,14 +336,15 @@ class Worker(QtCore.QObject):
                               'OVERLAY': inpblayer,
                               'OUTPUT': output
                 }
-                              # 'INPUT': self.Qvl,
+                #             'INPUT': self.Qvl,
                 self.phase.emit('clip (3/8)')
                 refclip = processing.run('native:clip', clipparams,
                                          context=self.plugincontext,
                                          feedback=fb,
                                          is_child_algorithm=True)
-                refcliplayer = self.plugincontext.temporaryLayerStore().mapLayer(refclip['OUTPUT'])
-                #refcliplayer = refclip['OUTPUT']
+                tlStore = self.plugincontext.temporaryLayerStore()
+                refcliplayer = tlStore.mapLayer(refclip['OUTPUT'])
+                # refcliplayer = refclip['OUTPUT']
                 provider = refcliplayer.dataProvider()
                 # Calculate the total length of reference lines inside
                 # the input buffer
@@ -353,7 +359,6 @@ class Worker(QtCore.QObject):
                 completeness[radius] = BOScompleteness
                 # self.status.emit('Clip finished')
 
-
                 # Then, miscodings:
                 # The reference buffer is used to remove parts of the
                 # input layer
@@ -363,15 +368,16 @@ class Worker(QtCore.QObject):
                   'OVERLAY': refblayer,
                   'OUTPUT': differenceoutput
                 }
-                  # 'OVERLAY': refbuff['OUTPUT'],
+                # 'OVERLAY': refbuff['OUTPUT'],
                 self.phase.emit('diff (4/8)')
                 difference = processing.run('native:difference', diffparams,
                                          context=self.plugincontext,
                                          feedback=fb,
                                          is_child_algorithm=True)
-                difflayer = self.plugincontext.temporaryLayerStore().mapLayer(difference['OUTPUT'])
-                #difference = processing.run('qgis:difference', diffparams)
-                #difflayer = difference['OUTPUT']
+                tlStore = self.plugincontext.temporaryLayerStore()
+                difflayer = tlStore.mapLayer(difference['OUTPUT'])
+                # difference = processing.run('qgis:difference', diffparams)
+                # difflayer = difference['OUTPUT']
                 provider = difflayer.dataProvider()
                 # Calculate the total length of input lines outside the
                 # reference buffer
@@ -386,24 +392,20 @@ class Worker(QtCore.QObject):
                 miscodings[radius] = BOSmiscodings
                 # self.status.emit('Diff finished')
 
-
-
-                #testparams = {
-                #  'INPUT': self.Xvl,
-                #  'OVERLAY': refbuff['OUTPUT'],
-                #  'OUTPUT': "memory:"
-                #}
-                #test = processing.run('native:union', testparams)
-                #testlayer = test['OUTPUT']
-                #self.status.emit('Testl, #: ' + str(testlayer.featureCount()))
-                #testlayer.selectByExpression("\"RefB\" = self.QFLAG")
-                #testvl = testlayer.materialize(
-                #    QgsFeatureRequest().setFilterFids(
-                #       testlayer.selectedFeatureIds()))
-                #self.status.emit('Test, #: ' + str(testvl.featureCount()))
-
-
-
+                # testparams = {
+                #   'INPUT': self.Xvl,
+                #   'OVERLAY': refbuff['OUTPUT'],
+                #   'OUTPUT': "memory:"
+                # }
+                # test = processing.run('native:union', testparams)
+                # testlayer = test['OUTPUT']
+                # self.status.emit('Testl, #: ' +
+                #                  str(testlayer.featureCount()))
+                # testlayer.selectByExpression("\"RefB\" = self.QFLAG")
+                # testvl = testlayer.materialize(
+                #     QgsFeatureRequest().setFilterFids(
+                #        testlayer.selectedFeatureIds()))
+                # self.status.emit('Test, #: ' + str(testvl.featureCount()))
 
                 # Calculate displacement information from the areas of
                 # the polygons resulting from an overlay of the two
@@ -413,14 +415,15 @@ class Worker(QtCore.QObject):
                                    'OVERLAY': refblayer,
                                    'OUTPUT': "memory:"
                 }
-                                   # 'INPUT': inpbuff['OUTPUT'],
-                                   # 'OVERLAY': refbuff['OUTPUT'],
+                #                  'INPUT': inpbuff['OUTPUT'],
+                #                  'OVERLAY': refbuff['OUTPUT'],
                 self.phase.emit('union1 (5/8)')
                 firstunion = processing.run("native:union", unionparameters,
                                          context=self.plugincontext,
                                          feedback=fb,
                                          is_child_algorithm=True)
-                firstunionlayer = self.plugincontext.temporaryLayerStore().mapLayer(firstunion['OUTPUT'])
+                tlStore = self.plugincontext.temporaryLayerStore()
+                firstunionlayer = tlStore.mapLayer(firstunion['OUTPUT'])
                 # Do union with a "background" layer to be able to
                 # identify the polygons that are outside both the
                 # input buffer and ref buffer
@@ -428,14 +431,15 @@ class Worker(QtCore.QObject):
                                    'INPUT': firstunionlayer,
                                    'OVERLAY': commonextbuflayer,
                                    'OUTPUT': "memory:"}
-                                   # 'INPUT': firstunion['OUTPUT'],
-                                   # 'OVERLAY': commonextbuf['OUTPUT'],
+                #                  'INPUT': firstunion['OUTPUT'],
+                #                  'OVERLAY': commonextbuf['OUTPUT'],
                 self.phase.emit('union2 (6/8)')
                 union = processing.run("native:union", unionparameters,
                                          context=self.plugincontext,
                                          feedback=fb,
                                          is_child_algorithm=True)
-                unionlayer = self.plugincontext.temporaryLayerStore().mapLayer(union['OUTPUT'])
+                tlStore = self.plugincontext.temporaryLayerStore()
+                unionlayer = tlStore.mapLayer(union['OUTPUT'])
                 # Do a multipart to single parts operation
                 self.phase.emit('tosingle (7/8)')
                 multitosingle = processing.run("native:multiparttosingleparts",
@@ -446,7 +450,8 @@ class Worker(QtCore.QObject):
                                                context=self.plugincontext,
                                                feedback=fb,
                                                is_child_algorithm=True)
-                multitosinglelayer = self.plugincontext.temporaryLayerStore().mapLayer(multitosingle['OUTPUT'])
+                tlStore = self.plugincontext.temporaryLayerStore()
+                multitosinglelayer = tlStore.mapLayer(multitosingle['OUTPUT'])
                 # Calculate areas:
                 # multitosinglelayer = multitosingle['OUTPUT']
                 provider = multitosinglelayer.dataProvider()
@@ -456,13 +461,15 @@ class Worker(QtCore.QObject):
                 provider.addAttributes([QgsField('Area', QVariant.Double)])
                 multitosinglelayer.updateFields()
                 multitosinglelayer.startEditing()
-                area_field_index = multitosinglelayer.fields().lookupField('Area')
-                comb_field_index = multitosinglelayer.fields().lookupField('Combined')
+                mts_fields = multitosinglelayer.fields()
+                area_field_index = mts_fields.lookupField('Area')
+                comb_field_index = mts_fields.lookupField('Combined')
                 for f in provider.getFeatures():
                     # Calculate the area and update the area attribute
                     area = f.geometry().area()
-                    multitosinglelayer.changeAttributeValue(f.id(), area_field_index,
-                                                    area)
+                    multitosinglelayer.changeAttributeValue(f.id(),
+                                                            area_field_index,
+                                                            area)
                     # Determine and set the combination attribute
                     # If neither inside X or Q, set it to self.OUTSIDEFLAG
                     iidx = multitosinglelayer.fields().lookupField('InputB')
@@ -481,11 +488,11 @@ class Worker(QtCore.QObject):
                             comb = r
                         else:
                             comb = self.OUTSIDEFLAG
-                    multitosinglelayer.changeAttributeValue(f.id(), comb_field_index,
-                                                    comb)
+                    multitosinglelayer.changeAttributeValue(f.id(),
+                                                            comb_field_index,
+                                                            comb)
                 unionlayer.commitChanges()
                 # self.status.emit('Unions finished')
-
 
                 # Do the area statistics to get the area for the following:
                 # I: Inside input buffer, outside reference buffer
@@ -495,19 +502,20 @@ class Worker(QtCore.QObject):
                 # O: Outside input buffer, outside reference buffer
                 statparams = {
                      # 'INPUT': union['OUTPUT'],
+                     # 'INPUT': multitosingle['OUTPUT'],
                      'INPUT': multitosinglelayer,
                      # 'INPUT': unionlayer,
                      'VALUES_FIELD_NAME': 'Area',
                      'CATEGORIES_FIELD_NAME': 'Combined',
                      'OUTPUT': 'memory:'
                 }
-                     # 'INPUT': multitosingle['OUTPUT'],
                 self.phase.emit('stat (8/8)')
-                stats = processing.run('qgis:statisticsbycategories', statparams,
-                                       context=self.plugincontext,
+                stats = processing.run('qgis:statisticsbycategories',
+                                       statparams, context=self.plugincontext,
                                        is_child_algorithm=True)
-                statlayer = self.plugincontext.temporaryLayerStore().mapLayer(stats['OUTPUT'])
-                #statlayer = stats['OUTPUT']
+                statlayer = self.plugincontext.temporaryLayerStore().mapLayer(
+                                                               stats['OUTPUT'])
+                # statlayer = stats['OUTPUT']
                 provider = statlayer.dataProvider()
                 # extract from the statistics
                 currstats = collections.OrderedDict()
@@ -568,8 +576,8 @@ class Worker(QtCore.QObject):
                 result.append(rec)
                 # Add average displacement (eighth row)
                 rec = ['average_displacement']
+                # for i in self.radii:  # ???
                 for i in list(areastatistics.keys()):
-                #for i in self.radii:  # ???
                     vals = areastatistics[i]
                     # pi() * radius * area inside q and outside i / area
                     # inside i buffer
@@ -597,7 +605,7 @@ class Worker(QtCore.QObject):
                 self.progress.emit(self.percentage)
 
     def alg_progress_changed(self, algprogress):
-        #self.status.emit("Algprogress: " + str(algprogress))
+        # self.status.emit("Algprogress: " + str(algprogress))
         self.algprogress.emit(algprogress)
 
     def kill(self):

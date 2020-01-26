@@ -153,7 +153,8 @@ class BOS:
                 self.iface.addToolBarIcon(action)
         if add_to_menu and hasattr(self.iface, 'addPluginToVectorMenu'):
             self.iface.addPluginToVectorMenu(
-                self.BOSAMP,
+                # self.BOSAMP,
+                '',
                 action)
         self.actions.append(action)
         return action
@@ -173,7 +174,8 @@ class BOS:
         for action in self.actions:
             if hasattr(self.iface, 'addPluginToVectorMenu'):
                 self.iface.removePluginVectorMenu(
-                    self.BOSAMP,
+                    # self.BOSAMP,
+                    '',
                     action)
             if hasattr(self.iface, 'removeVectorToolBarIcon'):
                 self.iface.removeVectorToolBarIcon(action)
