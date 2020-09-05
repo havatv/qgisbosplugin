@@ -1,6 +1,6 @@
 [general]
 name=BOS
-version=1.0.1
+version=1.1.0
 qgisMinimumVersion=3.4.0
 description=Assess the quality (including geometric accuracy) of a line data set by comparing it to a line data set of significantly higher accuracy using the BOS method.
 author=Håvard Tveite, NMBU
@@ -9,7 +9,9 @@ about=The BOS Plugin compares the geometries of two line layers (the input and t
 tracker=https://github.com/havatv/qgisbosplugin/issues
 repository=https://github.com/havatv/qgisbosplugin.git
 homepage=http://arken.nmbu.no/~havatv/gis/qgisplugins/BOS
-changelog=1.0.1
+changelog=1.1.0
+    -- Set the minimum number of steps to 2 (#1)
+    1.0.1
     -- Eliminated the superfluous "BOS" submenu under the Vector menu
     -- Documentation update
     -- Code cleaning (PEP 8)
