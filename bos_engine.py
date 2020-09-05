@@ -220,22 +220,22 @@ class Worker(QtCore.QObject):
             tlStore = self.plugincontext.temporaryLayerStore()
             refextlayer = tlStore.mapLayer(refext['OUTPUT'])
             commonext = processing.run("qgis:intersection",
-                                    {'INPUT': inpextlayer,
-                                     'OVERLAY': refextlayer,
-                                     'OUTPUT': 'memory:'},
-                                    context=self.plugincontext,
-                                    is_child_algorithm=True)
+                                       {'INPUT': inpextlayer,
+                                        'OVERLAY': refextlayer,
+                                        'OUTPUT': 'memory:'},
+                                       context=self.plugincontext,
+                                       is_child_algorithm=True)
             #                       {'INPUT': inpext['OUTPUT'],
             #                        'OVERLAY': refext['OUTPUT'],
             tlStore = self.plugincontext.temporaryLayerStore()
             commonextlayer = tlStore.mapLayer(commonext['OUTPUT'])
             commonextbuf = processing.run("native:buffer",
-                                    {'INPUT': commonextlayer,
-                                     'DISTANCE': 1.1 *
-                                     self.radii[len(self.radii) - 1],
-                                     'OUTPUT': 'memory:'},
-                                    context=self.plugincontext,
-                                    is_child_algorithm=True)
+                                          {'INPUT': commonextlayer,
+                                           'DISTANCE': 1.1 *
+                                           self.radii[len(self.radii) - 1],
+                                           'OUTPUT': 'memory:'},
+                                          context=self.plugincontext,
+                                          is_child_algorithm=True)
             #                       {'INPUT': commonext['OUTPUT'],
             tlStore = self.plugincontext.temporaryLayerStore()
             commonextbuflayer = tlStore.mapLayer(commonextbuf['OUTPUT'])
@@ -371,9 +371,9 @@ class Worker(QtCore.QObject):
                 # 'OVERLAY': refbuff['OUTPUT'],
                 self.phase.emit('diff (4/8)')
                 difference = processing.run('native:difference', diffparams,
-                                         context=self.plugincontext,
-                                         feedback=fb,
-                                         is_child_algorithm=True)
+                                            context=self.plugincontext,
+                                            feedback=fb,
+                                            is_child_algorithm=True)
                 tlStore = self.plugincontext.temporaryLayerStore()
                 difflayer = tlStore.mapLayer(difference['OUTPUT'])
                 # difference = processing.run('qgis:difference', diffparams)
@@ -419,9 +419,9 @@ class Worker(QtCore.QObject):
                 #                  'OVERLAY': refbuff['OUTPUT'],
                 self.phase.emit('union1 (5/8)')
                 firstunion = processing.run("native:union", unionparameters,
-                                         context=self.plugincontext,
-                                         feedback=fb,
-                                         is_child_algorithm=True)
+                                            context=self.plugincontext,
+                                            feedback=fb,
+                                            is_child_algorithm=True)
                 tlStore = self.plugincontext.temporaryLayerStore()
                 firstunionlayer = tlStore.mapLayer(firstunion['OUTPUT'])
                 # Do union with a "background" layer to be able to
@@ -435,9 +435,9 @@ class Worker(QtCore.QObject):
                 #                  'OVERLAY': commonextbuf['OUTPUT'],
                 self.phase.emit('union2 (6/8)')
                 union = processing.run("native:union", unionparameters,
-                                         context=self.plugincontext,
-                                         feedback=fb,
-                                         is_child_algorithm=True)
+                                       context=self.plugincontext,
+                                       feedback=fb,
+                                       is_child_algorithm=True)
                 tlStore = self.plugincontext.temporaryLayerStore()
                 unionlayer = tlStore.mapLayer(union['OUTPUT'])
                 # Do a multipart to single parts operation
@@ -446,7 +446,7 @@ class Worker(QtCore.QObject):
                                                {
                                                 'INPUT': unionlayer,
                                                 'OUTPUT': "memory:"},
-                                                # 'INPUT': union['OUTPUT'],
+                                               # 'INPUT': union['OUTPUT'],
                                                context=self.plugincontext,
                                                feedback=fb,
                                                is_child_algorithm=True)
@@ -564,7 +564,7 @@ class Worker(QtCore.QObject):
                                     # self.radii[0]].keys()):  # ???
                     rec = [thekey]  # First value is an identifier
                     rec.extend([i[thekey] for i in
-                        list(areastatistics.values())])
+                               list(areastatistics.values())])
                     result.append(rec)
                 # Add completeness (sixth row)
                 rec = ['completeness']  # First value is identifier

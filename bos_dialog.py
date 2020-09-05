@@ -31,8 +31,9 @@ import matplotlib as mpl
 from matplotlib.figure import Figure
 from matplotlib import ticker
 # from matplotlib import axes
-from matplotlib.backends.backend_qt5agg import (FigureCanvas,
-    NavigationToolbar2QT as NavigationToolbar)
+from matplotlib.backends.backend_qt5agg import FigureCanvas
+from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
+                                                NavigationToolbar)
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtCore import QCoreApplication, QObject, QThread
@@ -330,7 +331,7 @@ class BOSDialog(QDialog, FORM_CLASS):
                 # self.showInfo("R: " + str(outioutr))
             else:
                 self.showError("Strange statistics type: " +
-                                str(self.results[i][0]))
+                               str(self.results[i][0]))
         graphtype = self.graphtypeCB.itemData(self.graphtypeCB.currentIndex())
 
         maxdispval = 0  # For storing the largest value
@@ -400,9 +401,9 @@ class BOSDialog(QDialog, FORM_CLASS):
             # Add (0, 0)
             static_ax.plot([0] + radii,
                            [0] + [percent * 100 for percent in compl],
-                            ".-", color='black', fillstyle='none',
-                            label="Completeness of X relative to Q",
-                            linewidth=0.2)
+                           ".-", color='black', fillstyle='none',
+                           label="Completeness of X relative to Q",
+                           linewidth=0.2)
             # Add (0, 100)
             static_ax.plot([0] + radii,
                            [100] + [percent * 100 for percent in misc],
@@ -525,10 +526,10 @@ class BOSDialog(QDialog, FORM_CLASS):
             static_ax[1][0].xaxis.set_tick_params(labelsize=ticsize)
             static_ax[1][0].yaxis.set_tick_params(labelsize=ticsize)
             static_ax[1][0].plot(radii, oscillations, ".-", color='black',
-                           fillstyle='none',
-                           label="#Polygons",
-                           linewidth=0.5,
-                           markersize=5)
+                                 fillstyle='none',
+                                 label="#Polygons",
+                                 linewidth=0.5,
+                                 markersize=5)
             static_ax[1][0].grid(which='both')
             static_ax[1][0].legend(fontsize=legsize)
 
@@ -541,10 +542,10 @@ class BOSDialog(QDialog, FORM_CLASS):
             static_ax[0][1].yaxis.set_tick_params(labelsize=ticsize)
             # Add a data point for 0
             static_ax[0][1].plot([0] + radii, [0] + avgdisp, ".-",
-                           color='black', fillstyle='none',
-                           label="Avg displ",
-                           linewidth=0.5,
-                           markersize=5)
+                                 color='black', fillstyle='none',
+                                 label="Avg displ",
+                                 linewidth=0.5,
+                                 markersize=5)
             static_ax[0][1].grid(which='both')
             static_ax[0][1].legend(fontsize=legsize)
 
@@ -557,25 +558,26 @@ class BOSDialog(QDialog, FORM_CLASS):
             static_ax[0][0].yaxis.set_tick_params(labelsize=ticsize)
             # Add data points for 0
             static_ax[0][0].plot([0] + radii,
-                           [0] + [percent * 100 for percent in normiiirsizes],
-                           ".-", color='black', fillstyle='none',
-                           label="IX & IQ",
-                           linewidth=0.5,
-                           markersize=5)
+                                 [0] + [percent * 100 for percent in
+                                 normiiirsizes],
+                                 ".-", color='black', fillstyle='none',
+                                 label="IX & IQ",
+                                 linewidth=0.5,
+                                 markersize=5)
             static_ax[0][0].plot([0] + radii,
-                           [100 * inplength / (inplength + reflength)] +
-                           [percent * 100 for percent in normiiorsizes],
-                           "+-", color='black', fillstyle='none',
-                           label="IX & OQ",
-                           linewidth=0.5,
-                           markersize=5)
+                                 [100 * inplength / (inplength + reflength)] +
+                                 [percent * 100 for percent in normiiorsizes],
+                                 "+-", color='black', fillstyle='none',
+                                 label="IX & OQ",
+                                 linewidth=0.5,
+                                 markersize=5)
             static_ax[0][0].plot([0] + radii,
-                           [100 * reflength / (inplength + reflength)] +
-                           [percent * 100 for percent in normoiirsizes],
-                           "s-", color='black', fillstyle='none',
-                           label="OX & IQ",
-                           linewidth=0.5,
-                           markersize=5)
+                                 [100 * reflength / (inplength + reflength)] +
+                                 [percent * 100 for percent in normoiirsizes],
+                                 "s-", color='black', fillstyle='none',
+                                 label="OX & IQ",
+                                 linewidth=0.5,
+                                 markersize=5)
             # vals = static_ax[0][0].get_yticks()
             static_ax[0][0].grid(which='both')
             fmt = '%.0f%%'
@@ -592,17 +594,17 @@ class BOSDialog(QDialog, FORM_CLASS):
             static_ax[1][1].yaxis.set_tick_params(labelsize=ticsize)
             # Add data points for 0
             static_ax[1][1].plot([0] + radii,
-                           [0] + [percent * 100 for percent in compl],
-                            ".-", color='black', fillstyle='none',
-                            label="Completeness",
-                            linewidth=0.5,
-                            markersize=5)
+                                 [0] + [percent * 100 for percent in compl],
+                                 ".-", color='black', fillstyle='none',
+                                 label="Completeness",
+                                 linewidth=0.5,
+                                 markersize=5)
             static_ax[1][1].plot([0] + radii,
-                           [100] + [percent * 100 for percent in misc],
-                           "+-", color='black', fillstyle='none',
-                           label="Miscodings",
-                           linewidth=0.5,
-                           markersize=5)
+                                 [100] + [percent * 100 for percent in misc],
+                                 "+-", color='black', fillstyle='none',
+                                 label="Miscodings",
+                                 linewidth=0.5,
+                                 markersize=5)
             # vals = static_ax[1][1].get_yticks()
             static_ax[1][1].grid(which='both')
             fmt = '%.0f%%'
@@ -662,8 +664,8 @@ class BOSDialog(QDialog, FORM_CLASS):
         try:
             self.figure.savefig(savename, dpi=300, format='pdf',
                                 metadata={'Creator': 'BOS QGIS Plugin',
-                                'Author': 'H Tveite, NMBU',
-                                'Title': plottitle})
+                                          'Author': 'H Tveite, NMBU',
+                                          'Title': plottitle})
         except Exception:
             import traceback
             self.showError(traceback.format_exc())
@@ -706,8 +708,8 @@ class BOSDialog(QDialog, FORM_CLASS):
         try:
             self.figure.savefig(savename, dpi=300, format='svg',
                                 metadata={'Creator': 'BOS QGIS Plugin',
-                                'Author': 'H Tveite, NMBU',
-                                'Title': plottitle})
+                                          'Author': 'H Tveite, NMBU',
+                                          'Title': plottitle})
         except Exception:
             import traceback
             self.showError(traceback.format_exc())
@@ -738,7 +740,8 @@ class BOSDialog(QDialog, FORM_CLASS):
         try:
             with open(savename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter=';',
-                                    quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                                       quotechar='"',
+                                       quoting=csv.QUOTE_MINIMAL)
                 colnames = [item[0] for item in self.results]
                 csvwriter.writerow(colnames)
                 for i in range(len(self.results[0]) - 1):

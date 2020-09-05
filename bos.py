@@ -87,16 +87,16 @@ class BOS:
         return QCoreApplication.translate('BOS', message)
 
     def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None):
+                   self,
+                   icon_path,
+                   text,
+                   callback,
+                   enabled_flag=True,
+                   add_to_menu=True,
+                   add_to_toolbar=True,
+                   status_tip=None,
+                   whats_this=None,
+                   parent=None):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -191,14 +191,15 @@ class BOS:
             if layers[id].type() == QgsMapLayer.VectorLayer:
                 if not layers[id].isValid():
                     QMessageBox.information(None,
-                        self.tr('Information'),
-                        'Layer ' + layers[id].name() + ' is not valid')
+                                            self.tr('Information'),
+                                            'Layer ' + layers[id].name() +
+                                            ' is not valid')
                 if layers[id].geometryType() == QgsWkbTypes.LineGeometry:
                     layerslist.append((layers[id].name(), id))
         if len(layerslist) == 0 or len(layers) == 0:
             QMessageBox.information(None,
-               self.tr('Information'),
-               self.tr('Line vector layers not found'))
+                                    self.tr('Information'),
+                                    self.tr('Line vector layers not found'))
             return
         # Add the layers to the layers combobox
         self.dlg.inputLayer.clear()
@@ -209,7 +210,7 @@ class BOS:
         # Add the layers to the layers combobox
         for layerdescription in layerslist:
             self.dlg.referenceLayer.addItem(layerdescription[0],
-                                        layerdescription[1])
+                                            layerdescription[1])
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
