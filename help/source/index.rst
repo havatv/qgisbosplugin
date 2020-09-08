@@ -133,7 +133,7 @@ are to be considered.
 
 In the *Options* area you will find the following:
 
-- The *Number of steps* (buffer sizes)
+- The *Number of steps* (buffer sizes) - minimum 2
 
 - The *Start radius* (for the buffers)
 
@@ -260,8 +260,10 @@ is indicated in the area between the progress bars: "prep",
 
 Versions
 --------
-The current version is 1.0.1.
+The current version is 1.1.0.
 
+- 1.1.0
+    - Set the minimum number of steps to 2 (#1)
 - 1.0.1
     - Eliminated the superfluous "BOS" submenu under the Vector menu
     - Documentation update
